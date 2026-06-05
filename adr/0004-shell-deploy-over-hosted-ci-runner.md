@@ -31,8 +31,8 @@ A server-side deploy script, invoked on the box, with explicit guardrails:
 
 - **No external dependency** in the release path; nothing breaks because a
   hosted runner is down or a token rotated.
-- **Auditable and legible** — the whole pipeline is ~200 lines of shell you can
-  read in one sitting, and the log is the source of truth.
+- **Auditable and legible** — the whole pipeline is a few hundred lines of shell
+  you can read in one sitting, and the log is the source of truth.
 - **Costs:** you forgo the ecosystem (matrix builds, parallelism, marketplace
   actions) and have to write the guardrails yourself. Tests/static analysis run
   separately in hosted CI on push — deploy and verify are deliberately split.

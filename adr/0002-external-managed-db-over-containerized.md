@@ -15,7 +15,8 @@ it are meant to be disposable and frequently rebuilt.
 
 Keep the database on a dedicated, separately-managed host (a managed instance
 with its own backup, monitoring, and upgrade lifecycle) and point the
-containers at it over the network with per-tenant users. The containers stay
+containers at it over the network with per-tenant users, locked down per
+[ADR 0009](0009-default-deny-host-pinned-db-access.md). The containers stay
 stateless and cattle; the data tier is a pet, on purpose.
 
 ## Consequences
@@ -24,7 +25,7 @@ stateless and cattle; the data tier is a pet, on purpose.
   re-imaging an app container can never touch the data. Backups, point-in-time
   recovery, and version upgrades happen on a host built for exactly that.
 - **One place to reason about data.** Capacity, slow queries, and grants live
-  in one managed system instead of being smeared across ephemeral containers.
+  in one managed system instead of being scattered across ephemeral containers.
 - **Costs:** you lose the single-command bring-up; local/dev needs a story for
   the DB (a throwaway container is fine *there*, where statelessness is the
   point), and you take on network-path and connection-pool concerns.

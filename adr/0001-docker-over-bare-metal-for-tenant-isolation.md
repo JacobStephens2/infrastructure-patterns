@@ -22,9 +22,10 @@ read-only mount of its agent configuration.
 
 ## Consequences
 
-- **Hard isolation, cheaply.** Filesystem and process isolation come from the
-  container boundary rather than from code discipline. A tenant's agent simply
-  cannot reach another tenant's files.
+- **Strong default isolation, cheaply.** Filesystem and process isolation come
+  from the container boundary rather than from code discipline, so cross-tenant
+  file access becomes a container-escape problem rather than a one-line
+  application bug.
 - **Uniform provisioning.** Every tenant builds from one image and one compose
   definition, so adding a manager is a config change, not a new server.
 - **Costs:** image builds and registry hygiene, per-container resource tuning,

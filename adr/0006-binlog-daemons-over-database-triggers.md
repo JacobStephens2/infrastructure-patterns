@@ -8,9 +8,9 @@ A read-heavy reservations system keeps a lot of *derived* data in sync with its
 source rows — rolled-up totals, denormalized copies of a value onto the rows
 that query it, search-friendly projections. The in-database default for keeping
 derived data current is a TRIGGER that fires on every write. But triggers run
-*inside* each writing transaction, are invisible to the application, are awkward
-to test, version, and deploy (they're schema DDL, not code), and a slow or buggy
-one adds latency to — or wedges — the hot write path.
+*inside* each writing transaction and are invisible to the application. They're
+awkward to test, version, and deploy — they're schema DDL, not code — and a slow
+or buggy one adds latency to (or wedges) the hot write path.
 
 ## Decision
 
@@ -31,7 +31,8 @@ else (see [ADR 0004](0004-shell-deploy-over-hosted-ci-runner.md)).
   position to rebuild derived state after a bug or outage — a handle a trigger
   simply doesn't give you.
 - **Costs:** the derived data is eventually consistent (it lags by the daemon's
-  processing time), and you own the daemons' lifecycle — supervision,
+  processing time); the source must retain its binlogs long enough for the
+  daemons to consume them; and you own the daemons' lifecycle — supervision,
   restart-from-position, and idempotency so a replay can't double-apply.
 
 ## When I'd revisit
