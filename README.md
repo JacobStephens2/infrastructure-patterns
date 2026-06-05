@@ -45,6 +45,11 @@ gave up, and when I'd choose differently."
 | [0008](adr/0008-embedded-sqlite-over-networked-db-for-tooling.md) | Embedded SQLite over a networked DB for single-node tooling | Give up cross-host sharing for zero operational surface on state one process owns |
 | [0009](adr/0009-default-deny-host-pinned-db-access.md) | Default-deny, host-pinned DB access over a trusted network | Take on provisioning friction so a leaked credential isn't portable off its host |
 | [0010](adr/0010-pixel-equality-gate-over-diff-review-for-generated-markup.md) | A pixel-equality gate over diff review for changes to generated markup | Pay a render/diff harness to safely change markup you can't audit by eye - it proves visual, not semantic, equality |
+| [0011](adr/0011-instrumented-metrics-stack-over-bespoke-prober.md) | A pull-based metrics stack over a bespoke prober, data plane kept private | Take on a TSDB to run for real metrics/history/alerting - and bind the unauthenticated parts to loopback, exposing only one read-only pane |
+
+A concrete, sanitized companion to ADR 0011 lives in
+[`observability/`](observability/): the Prometheus/Alertmanager config and
+Grafana dashboards that make the pattern reproducible.
 
 ## Format
 
