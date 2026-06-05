@@ -6,8 +6,8 @@ so the *reasoning* is visible even where the code can't be.
 
 Most of this comes out of running a multi-portal PHP/MySQL reservations
 platform plus its surrounding tooling (a Python agent-orchestration host,
-per-tenant containerized AI sandboxes, a server-side deploy pipeline) as the
-lead engineer for a specialty-travel operator. Those repositories are private;
+per-tenant containerized AI sandboxes, a server-side deploy pipeline) as its
+lead engineer. Those repositories are private;
 these patterns are the parts that generalize, written at the architecture
 level — no hostnames, addresses, credentials, or vendor specifics.
 
@@ -21,9 +21,9 @@ gave up, and when I'd choose differently."
 
 | # | Decision | Trade-off in one line |
 |---|----------|------------------------|
-| [0001](adr/0001-docker-over-bare-metal-for-tenant-isolation.md) | Docker over bare-metal for per-tenant isolation | Pay image/ops overhead to get hard filesystem + DB-user isolation cheaply |
+| [0001](adr/0001-docker-over-bare-metal-for-tenant-isolation.md) | Docker over bare-metal for per-tenant isolation | Pay image/ops overhead to get strong filesystem + DB-user isolation cheaply |
 | [0002](adr/0002-external-managed-db-over-containerized.md) | External managed DB over a containerized one | Give up "one compose up" simplicity for durable, backup-friendly state |
-| [0003](adr/0003-nightly-snapshot-over-live-replication.md) | Nightly snapshot over live replication for sandboxes | Accept staleness to gain isolation, reset-ability, and zero prod risk |
+| [0003](adr/0003-periodic-snapshot-over-live-replication.md) | Periodic snapshot over live replication for sandboxes | Accept some staleness to gain isolation, reset-ability, and no prod write-path risk |
 | [0004](adr/0004-shell-deploy-over-hosted-ci-runner.md) | A guarded shell deploy over a hosted CI runner | Forgo ecosystem features for a dependency-free, auditable single-server deploy |
 | [0005](adr/0005-scoped-system-user-over-service-account.md) | A scoped system user over a shared service account for an autonomous agent | More host setup in exchange for clean per-action auditing and least privilege |
 | [0006](adr/0006-binlog-daemons-over-database-triggers.md) | Binlog-tailing daemons over database triggers for denormalization | Accept eventual consistency to keep derive-logic in versioned code, off the hot write path |

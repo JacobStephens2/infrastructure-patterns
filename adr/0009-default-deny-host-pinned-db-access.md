@@ -15,15 +15,16 @@ credential is usable from anywhere inside that boundary.
 
 Default-deny at two layers. The database's port is firewalled to an explicit
 allowlist of client IPs, and each database user's grants are *pinned to the host*
-it connects from — so a credential is inert anywhere but its intended client.
+it connects from — so a credential is useless from any IP outside the allowlist.
 Adding a client is a deliberate two-step: open the firewall for that IP and
 create a host-scoped grant. This composes with the per-agent identity work in
 [ADR 0005](0005-scoped-system-user-over-service-account.md).
 
 ## Consequences
 
-- **A leaked credential isn't portable.** It only works from an
-  already-allowlisted host, so theft of the secret alone doesn't buy access.
+- **A leaked credential isn't portable on its own.** It only works from an
+  already-allowlisted IP, so stealing the secret — without also operating from
+  an allowlisted host — doesn't buy access.
 - **Access is auditable by construction.** The allowlist *is* the list of who
   can connect; there's no ambient "anything on the network can reach the data."
 - **Costs:** provisioning friction — every new client is an explicit change in
