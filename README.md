@@ -1,7 +1,7 @@
 # infrastructure-patterns
 
 Sanitized, generalized write-ups of infrastructure patterns I've designed and
-operated in production — distilled into Architecture Decision Records (ADRs)
+operated in production - distilled into Architecture Decision Records (ADRs)
 so the *reasoning* is visible even where the code can't be.
 
 Most of this comes out of running a multi-portal PHP/MySQL reservations
@@ -9,7 +9,17 @@ platform plus its surrounding tooling (a Python agent-orchestration host,
 per-tenant containerized AI sandboxes, a server-side deploy pipeline) as its
 lead engineer. Those repositories are private;
 these patterns are the parts that generalize, written at the architecture
-level — no hostnames, addresses, credentials, or vendor specifics.
+level - no hostnames, addresses, credentials, or vendor specifics.
+
+Most of these patterns cluster on one seam: **safely running autonomous AI
+agents against revenue-critical legacy systems**. Per-tenant isolation
+([0001](adr/0001-docker-over-bare-metal-for-tenant-isolation.md)), snapshot-fed
+writable sandboxes ([0003](adr/0003-periodic-snapshot-over-live-replication.md)),
+a scoped agent identity ([0005](adr/0005-scoped-system-user-over-service-account.md)),
+and default-deny, host-pinned data access
+([0009](adr/0009-default-deny-host-pinned-db-access.md)) are four boundaries
+around the same problem: give an agent real production data and real reach
+without giving it the ability to damage the business.
 
 ## Why ADRs
 

@@ -1,11 +1,11 @@
-# ADR 0001 — Docker over bare-metal for per-tenant isolation
+# ADR 0001 - Docker over bare-metal for per-tenant isolation
 
 **Status:** Accepted · in production
 
 ## Context
 
 I needed to give each of several non-technical business managers their own
-AI-assisted instance of an internal app — each able to run an autonomous
+AI-assisted instance of an internal app - each able to run an autonomous
 coding agent that could read a copy of production data and even edit code,
 without any tenant being able to see or damage another's data, the host, or
 production. Running all tenants as processes on one host (bare-metal, shared
