@@ -1,11 +1,11 @@
-# ADR 0003 — Periodic snapshot over live replication for sandboxes
+# ADR 0003 - Periodic snapshot over live replication for sandboxes
 
 **Status:** Accepted · in production
 
 ## Context
 
 The per-tenant sandboxes ([ADR 0001](0001-docker-over-bare-metal-for-tenant-isolation.md))
-need realistic data to be useful — managers want to ask questions against
+need realistic data to be useful - managers want to ask questions against
 something that looks like production. Two ways to get it: attach each sandbox to
 a live replica of production, or periodically copy production into each
 sandbox's own database.
@@ -18,7 +18,7 @@ accidental write path is a much scarier thing.
 ## Decision
 
 Refresh each sandbox every few hours from a production *mirror* via
-dump-and-restore into the tenant's own database — swapping the refreshed data in
+dump-and-restore into the tenant's own database - swapping the refreshed data in
 with a rename so a sandbox never sees a half-loaded copy, and preserving
 tenant-local tables (e.g. per-tenant chat history). Each sandbox owns an
 independent, writable copy.
@@ -36,5 +36,5 @@ independent, writable copy.
 ## When I'd revisit
 
 If a use case needed *current* data (live dashboards, real-time ops), a
-read-only replica is the right tool — but I'd keep it separate from the
+read-only replica is the right tool - but I'd keep it separate from the
 writable sandbox path, not merge the two.
