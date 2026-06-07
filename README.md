@@ -46,6 +46,7 @@ gave up, and when I'd choose differently."
 | [0009](adr/0009-default-deny-host-pinned-db-access.md) | Default-deny, host-pinned DB access over a trusted network | Take on provisioning friction so a leaked credential isn't portable off its host |
 | [0010](adr/0010-pixel-equality-gate-over-diff-review-for-generated-markup.md) | A pixel-equality gate over diff review for changes to generated markup | Pay a render/diff harness to safely change markup you can't audit by eye - it proves visual, not semantic, equality |
 | [0011](adr/0011-instrumented-metrics-stack-over-bespoke-prober.md) | A pull-based metrics stack over a bespoke prober, data plane kept private | Take on a TSDB to run for real metrics/history/alerting - and bind the unauthenticated parts to loopback, exposing only one read-only pane |
+| [0012](adr/0012-copy-deployed-sync-services-over-shared-multi-tenant-backend.md) | Per-app copy-deployed sync services over a shared multi-tenant backend | Run N near-identical small services to gain physical blast-radius isolation and per-app sync-model freedom, at the cost of hand-applying shared-auth fixes across copies |
 
 A concrete, sanitized companion to ADR 0011 lives in
 [`observability/`](observability/): the Prometheus/Alertmanager config and
