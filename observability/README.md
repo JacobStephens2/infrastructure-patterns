@@ -4,7 +4,8 @@ The concrete, sanitized companion to
 [ADR 0011](../adr/0011-instrumented-metrics-stack-over-bespoke-prober.md): a
 pull-based metrics stack (Prometheus + Grafana + Alertmanager + node/blackbox
 exporters) configured as code, with every unauthenticated component on loopback
-and one read-only Grafana pane public.
+and one read-only Grafana pane published as a baked image (the live instance
+stays behind login).
 
 The rest of this repo is generalized ADRs - reasoning without code. This
 directory is the exception: the config and dashboards that make the pattern in
@@ -26,6 +27,14 @@ grafana/
     fleet-overview.json site up/down + service up/down + latency + cert days
     host-overview.json  CPU / memory / disk / load / network
 ```
+
+## The published pane
+
+The golden signals for one service - request rate by route, status mix, 5xx
+ratio, and request latency - alongside up/health probes and TLS-cert runway.
+Baked to a static image so the live instance stays behind login.
+
+![Grafana app-service pane: request rate by route, requests by status, 5xx error ratio, mean request latency, service-up and external-health probes, and TLS cert days remaining](app-service.png)
 
 ## Notes that cost time to learn
 
