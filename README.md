@@ -50,6 +50,7 @@ gave up, and when I'd choose differently."
 | [0013](adr/0013-staged-declarative-provisioning-over-imperative-bootstrap.md) | Staged declarative provisioning (Terraform + cloud-init + separate deploy) over one imperative bootstrap script | Take on Terraform state and a deliberately create-only provisioning token for a single box to get a reproducible, reviewable host and a clean provision/configure/deploy seam |
 | [0014](adr/0014-import-live-dns-over-recreating-it.md) | Import ~220 live DNS records into Terraform over recreating them from a desired-state list | Accept verbose generated config and provider quirks to adopt traffic-serving records with zero downtime and a no-op baseline plan, instead of risking duplicate-creates and silent deletion of forgotten records |
 | [0015](adr/0015-state-off-the-provider-it-provisions.md) | Keep Terraform state on a different provider than the compute it provisions | Take on a second vendor + scoped IAM key so a provider-level outage can't destroy both the infrastructure and the state needed to rebuild it |
+| [0016](adr/0016-policy-as-code-admission-over-trusted-manifests.md) | Enforce cluster posture at admission (OPA/Gatekeeper + a VAP) over trusting reviewed manifests | Run a policy controller so the hardened posture is rejected-if-violated at the API server instead of relying on review - the control that matters once a second actor or an agent can apply to the cluster |
 
 A concrete, sanitized companion to ADR 0011 lives in
 [`observability/`](observability/): the Prometheus/Alertmanager config and
@@ -57,6 +58,10 @@ Grafana dashboards that make the pattern reproducible. A companion to ADRs
 0013-0015 - the full Terraform/Cloudflare/Ansible DNS-as-code repo, sanitized -
 lives at
 [terraform-cloudflare-dns](https://github.com/JacobStephens2/terraform-cloudflare-dns).
+A companion to ADR 0016 - the live k3s deployment whose posture the policy set
+enforces - lives at [k3s-demo](https://github.com/JacobStephens2/k3s-demo)
+(`k3s-demo.stephens.page`), with the manifests under
+[`policy/`](https://github.com/JacobStephens2/k3s-demo/tree/main/policy).
 
 ## Format
 
