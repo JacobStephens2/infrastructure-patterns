@@ -1,6 +1,6 @@
 # ADR 0018 - Runtime-injected secrets over plaintext config, with the store matched to the team
 
-**Status:** Accepted · in production on two fleets
+**Status:** Accepted · in production on two fleets · broker half verified in situ (2026-06)
 
 ## Context
 
@@ -28,12 +28,23 @@ per operational context.** The consumer contract is environment variables; no
 consumer knows or cares which backend produced them.
 
 - **Team fleet: a managed broker (1Password).** Credentials live in the vault;
-  runtime injection puts them into the environment of the process that needs
-  them for as long as it needs them. The broker earns its subscription where a
-  team exists: sharing without Slack-pasting, central revocation when a person
-  or machine is offboarded, rotation in one place, and an access log. The
-  autonomous coding agent gets its credentials the same way - vault-injected at
-  runtime, auditable, never written into its sandbox.
+  `op inject` resolves a checked-in template of `op://` references (references
+  in git, values never) into the consuming process's environment - for the
+  lifetime of that process, with long-lived consumers re-injecting at restart.
+  One template feeds both consumer shapes on the box: a systemd service renders
+  it in `ExecStartPre` to a tmpfs runtime file (re-resolved every unit start,
+  wiped on reboot), and the interactive agent launcher exports it env-only at
+  session launch. The template doubles as the reviewable inventory of
+  everything the machine identity can receive. The broker earns its
+  subscription where a team exists: sharing without chat-pasting, central
+  revocation when a person or machine is offboarded, rotation in one place
+  (exercised - the bootstrap token has been rotated twice; consumers picked it
+  up at next launch), and an access log (offered by the broker; not yet
+  consumed on this fleet). The autonomous coding agent gets its credentials the
+  same vault-injected way, and the injection path writes nothing to its sandbox
+  filesystem - but injected values are inherited by every child process, and
+  session transcripts persist to disk, so the never-print discipline is part of
+  the control, not a property of the mechanism.
 - **Solo fleet: file-based encryption (SOPS + age).** Each secret file is
   encrypted to an age key (`*.env.sops`); a ~15-line `secret-env` wrapper
   decrypts one file into one command's environment and `exec`s it. systemd
@@ -47,8 +58,11 @@ consumer knows or cares which backend produced them.
   for years on mode-600 plaintext `.env` files sourced per-command, and the
   upgrade to SOPS touched one wrapper and two systemd units - zero consumers.
   The same seam is the migration path to a broker if the context ever changes.
-- **Scoping survives the abstraction.** Broker side, credentials are scoped to
-  the vault and machine that need them. File side, each `.env.sops` holds one
+- **Scoping survives the abstraction - and its real unit is the vault.**
+  Broker side, the machine identity is a dedicated service account confined to
+  a single vault, fully separate from human seats; injection granularity
+  differs per consumer on the same box (per-unit-start for the service,
+  per-session - days - for the agent). File side, each `.env.sops` holds one
   service's credentials, tokens are minted least-privilege (a read-only token
   and an edit token are separate files), and the runbooks write new tokens
   straight into ciphertext - no plaintext step to forget.
@@ -57,7 +71,10 @@ consumer knows or cares which backend produced them.
 
 - **A leaked disk, backup, or transcript exposes ciphertext, not credentials.**
   The class of accident the plaintext default invites - the stray `cat`, the
-  file in the wrong tarball - now discloses nothing.
+  file in the wrong tarball - now discloses nothing. (Honestly qualified:
+  in-situ verification found two legacy plaintext env files on the team fleet
+  still awaiting vault migration, marked as such. An adopted invariant has
+  residue; finding and naming it is what the verification pass is for.)
 - **Two backends is more honest than one, and costs a second mental model.**
   The broker's audit log and revocation have no SOPS equivalent; SOPS's
   offline, zero-vendor recovery has no broker equivalent. Pretending one tool
@@ -65,11 +82,17 @@ consumer knows or cares which backend produced them.
 - **Neither defeats a compromised operator account.** On the solo fleet the
   age key is readable by the operating user, so an attacker with that shell
   can decrypt; the broker still needs a bootstrap credential on the box for
-  non-interactive use. Both choices *concentrate and harden* the root of
-  trust - they do not eliminate it. Naming that is part of the decision.
+  non-interactive use (a root-owned, group-readable env file) - and that token
+  rides in the agent's environment, making the agent a broker *client*, not
+  merely a downstream consumer. Both choices *concentrate and harden* the root
+  of trust - they do not eliminate it. Naming that is part of the decision.
 - **The broker is a runtime dependency; the files are not.** A broker outage
-  or expired seat blocks injection on the team fleet; the solo fleet decrypts
-  with no network at all. Each fleet got the failure mode it can afford.
+  or expired seat blocks injection on the team fleet - and the launcher is
+  deliberately fail-closed, refusing to start a consumer with an empty
+  environment rather than degrading, so an outage gates new launches and
+  restarts while already-running consumers coast on their injected
+  environment. The solo fleet decrypts with no network at all. Each fleet got
+  the failure mode it can afford.
 - **Rotation asymmetry.** Broker rotation is one update, consumers pick it up
   on next injection. SOPS rotation means re-encrypting files and, for the age
   key itself, re-keying every file - acceptable at solo scale, painful beyond
@@ -109,7 +132,11 @@ upstream and downstream of the automation, not only how it behaves.*
 
 - **(c) Not delegated.** The secret system may *inject*; it may never *mint,
   widen, or share*. Creating a credential, raising its scope, or granting a
-  person or agent access to a vault is a human action under review - and the
-  autonomous agent that receives vault-injected credentials cannot read the
-  vault itself, list what else exists, or exfiltrate a secret it was never
-  handed. An agent's compromise is bounded by what was injected into it.
+  person or agent access to a vault is a human action under review. The
+  agent's machine identity is confined to a single dedicated vault: it can
+  list and read what that vault holds - including the bootstrap token it
+  carries in its own environment - so its compromise is bounded by the
+  vault's scope, not by what was injected into a given session.
+  Vault-per-machine scoping, not per-item handing, is the boundary; in-situ
+  verification corrected this sentence from the stronger claim originally
+  written here.
