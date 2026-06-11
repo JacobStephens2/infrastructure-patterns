@@ -1,6 +1,6 @@
 # ADR 0018 - Runtime-injected secrets over plaintext config, with the store matched to the team
 
-**Status:** Accepted · in production on two fleets · broker half verified in situ (2026-06)
+**Status:** Accepted · in production on two fleets
 
 ## Context
 
@@ -38,9 +38,8 @@ consumer knows or cares which backend produced them.
   everything the machine identity can receive. The broker earns its
   subscription where a team exists: sharing without chat-pasting, central
   revocation when a person or machine is offboarded, rotation in one place
-  (exercised - the bootstrap token has been rotated twice; consumers picked it
-  up at next launch), and an access log (offered by the broker; not yet
-  consumed on this fleet). The autonomous coding agent gets its credentials the
+  (a rotated value reaches each consumer at its next launch), and an access
+  log. The autonomous coding agent gets its credentials the
   same vault-injected way, and the injection path writes nothing to its sandbox
   filesystem - but injected values are inherited by every child process, and
   session transcripts persist to disk, so the never-print discipline is part of
@@ -71,10 +70,9 @@ consumer knows or cares which backend produced them.
 
 - **A leaked disk, backup, or transcript exposes ciphertext, not credentials.**
   The class of accident the plaintext default invites - the stray `cat`, the
-  file in the wrong tarball - now discloses nothing. (Honestly qualified:
-  in-situ verification found two legacy plaintext env files on the team fleet
-  still awaiting vault migration, marked as such. An adopted invariant has
-  residue; finding and naming it is what the verification pass is for.)
+  file in the wrong tarball - now discloses nothing. The discipline is only as
+  good as its coverage: an adopted invariant is worth periodically auditing for
+  plaintext that predates it and never got migrated.
 - **Two backends is more honest than one, and costs a second mental model.**
   The broker's audit log and revocation have no SOPS equivalent; SOPS's
   offline, zero-vendor recovery has no broker equivalent. Pretending one tool
@@ -82,10 +80,10 @@ consumer knows or cares which backend produced them.
 - **Neither defeats a compromised operator account.** On the solo fleet the
   age key is readable by the operating user, so an attacker with that shell
   can decrypt; the broker still needs a bootstrap credential on the box for
-  non-interactive use (a root-owned, group-readable env file) - and that token
-  rides in the agent's environment, making the agent a broker *client*, not
-  merely a downstream consumer. Both choices *concentrate and harden* the root
-  of trust - they do not eliminate it. Naming that is part of the decision.
+  non-interactive use - and if that credential is injected into an agent's
+  environment, the agent becomes a broker *client*, not merely a downstream
+  consumer. Both choices *concentrate and harden* the root of trust - they do
+  not eliminate it. Naming that is part of the decision.
 - **The broker is a runtime dependency; the files are not.** A broker outage
   or expired seat blocks injection on the team fleet - and the launcher is
   deliberately fail-closed, refusing to start a consumer with an empty
@@ -132,11 +130,12 @@ upstream and downstream of the automation, not only how it behaves.*
 
 - **(c) Not delegated.** The secret system may *inject*; it may never *mint,
   widen, or share*. Creating a credential, raising its scope, or granting a
-  person or agent access to a vault is a human action under review. The
-  agent's machine identity is confined to a single dedicated vault: it can
-  list and read what that vault holds - including the bootstrap token it
-  carries in its own environment - so its compromise is bounded by the
-  vault's scope, not by what was injected into a given session.
-  Vault-per-machine scoping, not per-item handing, is the boundary; in-situ
-  verification corrected this sentence from the stronger claim originally
-  written here.
+  person or agent access to a vault is a human action under review. And a
+  caution this pattern forces into the open: when an agent's machine identity
+  is a broker token scoped to a vault, the agent can list and read everything
+  in that vault - including the bootstrap token in its own environment - not
+  only the values injected for a given task. So the boundary that actually
+  bounds an agent compromise is the vault's scope: one dedicated vault per
+  machine identity, holding only what that identity may ever receive. Per-item
+  injection is not a containment boundary; scope the vault as if the agent will
+  read all of it, because it can.
