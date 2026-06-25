@@ -33,6 +33,9 @@ gave up, and when I'd choose differently."
 
 ## Decision records
 
+These also read on the web, rendered from this repo, at
+[stephens.page/decisions](https://stephens.page/decisions/).
+
 | # | Decision | Trade-off in one line |
 |---|----------|------------------------|
 | [0001](adr/0001-docker-over-bare-metal-for-tenant-isolation.md) | Docker over bare-metal for per-tenant isolation | Pay image/ops overhead to get strong filesystem + DB-user isolation cheaply |
@@ -55,6 +58,7 @@ gave up, and when I'd choose differently."
 | [0018](adr/0018-runtime-injected-secrets-over-plaintext-config.md) | Runtime-injected secrets over plaintext config, with the store matched to the team | Hold one invariant (encrypted at rest, injected into the environment at runtime) and pay for two backends - a broker where a team needs sharing/revocation/audit, SOPS + age where a solo fleet needs offline zero-vendor recovery - rather than force one tool to fit both |
 | [0019](adr/0019-reuse-passkey-session-forward-auth-over-second-auth-stack.md) | Reuse an existing passkey session to gate a second app (Caddy forward_auth) over standing up a second auth stack | Gate a second internal app by delegating to one hardened passkey session via Caddy forward_auth - ~40 lines of Caddyfile, zero new auth code, every tool inheriting the gate's future hardening - at the cost of concentrating trust in a single session |
 | [0020](adr/0020-private-mesh-for-shells-mfa-gated-public-endpoints-for-browsers.md) | A private mesh for operator shells, public MFA-gated endpoints for browser consoles, over one VPN for everything | Put SSH behind a WireGuard mesh and drop public :22, but keep browser admin consoles public behind per-audience MFA - size the boundary to who uses it, rather than hide the consoles non-technical staff reach by URL behind a VPN client they can't maintain |
+| [0021](adr/0021-shared-collector-seam-over-direct-backend-wiring.md) | A shared OpenTelemetry collector seam over direct backend wiring | Add one collector as the ingestion seam so new telemetry sources and backends are configuration, not new architecture - agent usage metrics only, never prompt content |
 
 A concrete, sanitized companion to ADR 0011 lives in
 [`observability/`](observability/): the Prometheus/Alertmanager config and
