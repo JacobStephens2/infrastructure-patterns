@@ -72,6 +72,14 @@ enforces - lives at [k3s-demo](https://github.com/JacobStephens2/k3s-demo)
 (`k3s-demo.stephens.page`), with the manifests under
 [`policy/`](https://github.com/JacobStephens2/k3s-demo/tree/main/policy).
 
+## Companion artifacts
+
+The ADRs answer *why*. These sit alongside them to answer *how it all fits together*:
+
+- **[`case-study/`](case-study/)** — a sanitized end-to-end write-up of the specialty-travel platform these patterns come from: what the system looked like before, which ADRs tied together to modernize it under agents without a rewrite, and what generalizes.
+- **[`threat-model/agent-sandbox.md`](threat-model/agent-sandbox.md)** — the threat model I use to reason about running semi-autonomous AI agents against a revenue-critical legacy system: scope, assets, actors, threats, controls (mapped to specific ADRs), and residual risks. Loosely follows [OWASP Threat Modeling](https://owasp.org/www-community/Threat_Modeling).
+- **[`checklist/operational-review.md`](checklist/operational-review.md)** — the operational-review checklist I actually run before signing off that a system is ready to hold real money in production: blast radius, restore, secrets, auth, observability, deploy, cluster posture, agent-specific, supply chain, and decision documentation.
+
 ## Format
 
 Each ADR uses a short, consistent shape: **Context → Decision → Consequences →
