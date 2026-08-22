@@ -4,8 +4,8 @@
 
 ## Context
 
-I needed to give each of several non-technical business managers their own
-AI-assisted instance of an internal app - each able to run an autonomous
+I needed to give each of several non-technical business managers a role-specific
+Tourbot instance: a **Manager Sandbox** able to run an autonomous
 coding agent that could read a copy of production data and even edit code,
 without any tenant being able to see or damage another's data, the host, or
 production. Running all tenants as processes on one host (bare-metal, shared
@@ -15,7 +15,7 @@ autonomous agent erodes.
 
 ## Decision
 
-Run each tenant as its own container (Docker), behind a single reverse proxy
+Run each Manager Sandbox as its own container (Docker), behind a single reverse proxy
 that routes by hostname. Each container gets its own named volume, its own
 database user scoped to its own database, its own resource limits, and a
 read-only mount of its agent configuration.

@@ -1,10 +1,10 @@
-# ADR 0003 - Periodic snapshot over live replication for sandboxes
+# ADR 0003 - Periodic snapshot over live replication for Manager Sandboxes
 
 **Status:** Accepted · in production
 
 ## Context
 
-The per-tenant sandboxes ([ADR 0001](0001-docker-over-bare-metal-for-tenant-isolation.md))
+The Manager Sandboxes ([ADR 0001](0001-docker-over-bare-metal-for-tenant-isolation.md))
 need realistic data to be useful - managers want to ask questions against
 something that looks like production. Two ways to get it: attach each sandbox to
 a live replica of production, or periodically copy production into each
@@ -17,7 +17,7 @@ accidental write path is a much scarier thing.
 
 ## Decision
 
-Refresh each sandbox every few hours from a production *mirror* via
+Refresh each Manager Sandbox every few hours from a production *mirror* via
 dump-and-restore into the tenant's own database - swapping the refreshed data in
 with a rename so a sandbox never sees a half-loaded copy, and preserving
 tenant-local tables (e.g. per-tenant chat history). Each sandbox owns an

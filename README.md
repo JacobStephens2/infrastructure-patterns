@@ -6,10 +6,21 @@ so the *reasoning* is visible even where the code can't be.
 
 Most of this comes out of running a multi-portal PHP/MySQL reservations
 platform plus its surrounding tooling (a Python agent-orchestration host,
-per-tenant containerized AI sandboxes, a server-side deploy pipeline) as its
-lead engineer. Those repositories are private;
+Docker-based Manager Sandboxes, a server-side deploy pipeline) as its lead
+engineer. Those repositories are private;
 these patterns are the parts that generalize, written at the architecture
 level - no hostnames, addresses, credentials, or vendor specifics.
+
+## ETA Platform Evidence boundary
+
+- A **Manager Sandbox** is a role-specific Tourbot instance running in a Docker
+  container. It gives a manager and AI assistant an isolated place to explore
+  data and prototype changes before human-reviewed promotion.
+- A **Factory Worker** is one ETA Factory agent attempt running inside a
+  short-lived Firecracker microVM. It is not a Manager Sandbox.
+- The **Kubernetes Demo** is a separate single-node k3s learning and portfolio
+  environment. It is not part of ETA production, and Manager Sandboxes do not
+  run on it.
 
 Most of these patterns cluster on one seam: **safely running autonomous AI
 agents against revenue-critical legacy systems**. Per-tenant isolation
@@ -40,7 +51,7 @@ These also read on the web, rendered from this repo, at
 |---|----------|------------------------|
 | [0001](adr/0001-docker-over-bare-metal-for-tenant-isolation.md) | Docker over bare-metal for per-tenant isolation | Pay image/ops overhead to get strong filesystem + DB-user isolation cheaply |
 | [0002](adr/0002-external-managed-db-over-containerized.md) | External managed DB over a containerized one | Give up "one compose up" simplicity for durable, backup-friendly state |
-| [0003](adr/0003-periodic-snapshot-over-live-replication.md) | Periodic snapshot over live replication for sandboxes | Accept some staleness to gain isolation, reset-ability, and no prod write-path risk |
+| [0003](adr/0003-periodic-snapshot-over-live-replication.md) | Periodic snapshot over live replication for Manager Sandboxes | Accept some staleness to gain isolation, reset-ability, and no prod write-path risk |
 | [0004](adr/0004-shell-deploy-over-hosted-ci-runner.md) | A guarded shell deploy over a hosted CI runner | Forgo ecosystem features for a dependency-free, auditable single-server deploy |
 | [0005](adr/0005-scoped-system-user-over-service-account.md) | A scoped system user over a shared service account for an autonomous agent | More host setup in exchange for clean per-action auditing and least privilege |
 | [0006](adr/0006-binlog-daemons-over-database-triggers.md) | Binlog-tailing daemons over database triggers for denormalization | Accept eventual consistency to keep derive-logic in versioned code, off the hot write path |
@@ -67,8 +78,8 @@ Grafana dashboards that make the pattern reproducible. A companion to ADRs
 0013-0015 - the full Terraform/Cloudflare/Ansible DNS-as-code repo, sanitized -
 lives at
 [terraform-cloudflare-dns](https://github.com/JacobStephens2/terraform-cloudflare-dns).
-A companion to ADR 0016 - the live k3s deployment whose posture the policy set
-enforces - lives at [k3s-demo](https://github.com/JacobStephens2/k3s-demo)
+A companion to ADR 0016 - the separate, non-production Kubernetes Demo whose
+posture the policy set enforces - lives at [k3s-demo](https://github.com/JacobStephens2/k3s-demo)
 (`k3s-demo.stephens.page`), with the manifests under
 [`policy/`](https://github.com/JacobStephens2/k3s-demo/tree/main/policy).
 

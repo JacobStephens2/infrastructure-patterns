@@ -1,10 +1,15 @@
 # ADR 0016 - Enforce cluster posture at admission over trusting reviewed manifests
 
-**Status:** Accepted · in production (public artifact: `k3s-demo.stephens.page`, `github.com/JacobStephens2/k3s-demo`)
+**Status:** Accepted · live in the non-production Kubernetes Demo (`k3s-demo.stephens.page`, `github.com/JacobStephens2/k3s-demo`)
 
 ## Context
 
-The k3s-demo manifests already follow a hardened posture: containers run
+The Kubernetes Demo is a separate single-node k3s learning and portfolio
+environment, not part of ETA production. Manager Sandboxes run in Docker, while
+Factory Workers are agent attempts running in short-lived Firecracker microVMs;
+neither uses this cluster.
+
+The Kubernetes Demo manifests already follow a hardened posture: containers run
 non-root, drop all Linux capabilities, mount a read-only root filesystem,
 declare CPU/memory requests and limits, carry liveness and readiness probes, and
 pin explicit image tags. All of it is visible in `k8s/deployment.yaml` and

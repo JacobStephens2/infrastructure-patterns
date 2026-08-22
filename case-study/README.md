@@ -6,6 +6,18 @@ A companion to the ADRs in [`../adr/`](../adr/). ADRs answer *"what did you deci
 
 ---
 
+## Three environments, three purposes
+
+- A **Manager Sandbox** is a role-specific Tourbot instance running in a Docker
+  container. Managers use these isolated copies to explore data and prototype
+  changes before human-reviewed promotion.
+- A **Factory Worker** is one ETA Factory agent attempt running inside a
+  short-lived Firecracker microVM. Factory Workers are separate from Manager
+  Sandboxes.
+- The **Kubernetes Demo** is a separate single-node k3s learning and portfolio
+  environment. It is not part of ETA production, and Manager Sandboxes do not
+  run on it.
+
 ## The system before
 
 A ~15-year-old multi-portal reservations, itinerary, and back-office platform for a specialty travel operator — hundreds of thousands of dollars per booking, revenue-critical, on the same PHP/MySQL stack it was written on.
@@ -28,13 +40,13 @@ That constraint — *safe AI automation for revenue-critical legacy systems* —
 
 Each of these is written up as an ADR; the case-study framing is what tied them together.
 
-### 1. Per-tenant containerized sandboxes over bare-metal
+### 1. Manager Sandboxes in Docker over bare-metal
 
-Every operator-facing automation runs inside a Docker container with its own filesystem, its own scoped MySQL user, and its own scoped system identity. Blast radius stops at the container. See [ADR 0001](../adr/0001-docker-over-bare-metal-for-tenant-isolation.md), [ADR 0005](../adr/0005-scoped-system-user-over-service-account.md).
+Each Manager Sandbox is a role-specific Tourbot instance running inside a Docker container with its own filesystem, scoped MySQL user, and scoped system identity. Blast radius stops at the container. See [ADR 0001](../adr/0001-docker-over-bare-metal-for-tenant-isolation.md), [ADR 0005](../adr/0005-scoped-system-user-over-service-account.md).
 
-### 2. Snapshot-fed writable sandboxes over live replication
+### 2. Snapshot-fed Manager Sandboxes over live replication
 
-Agents get real production data to reason over, but they write into a periodically-refreshed snapshot of the schema — never the primary. A destructive write is a re-snapshot away from erased. See [ADR 0003](../adr/0003-periodic-snapshot-over-live-replication.md).
+Agents in Manager Sandboxes get realistic data to reason over, but they write into a periodically-refreshed snapshot of the schema — never the primary. A destructive write is a re-snapshot away from erased. See [ADR 0003](../adr/0003-periodic-snapshot-over-live-replication.md).
 
 ### 3. Default-deny, host-pinned DB access over trusted network
 
@@ -44,19 +56,23 @@ Every DB grant is scoped by user *and* host. A credential exfiltrated from a con
 
 Legacy templates emit opaque, machine-generated markup no reviewer can eye-diff safely. An agent edit is gated by a headless-browser render of the before/after and a pixel-perfect equality assertion — the human is asked to approve *only* changes that moved zero pixels. See [ADR 0010](../adr/0010-pixel-equality-gate-over-diff-review-for-generated-markup.md).
 
-### 5. Policy-as-code admission for the surrounding cluster
+### 5. Factory Workers in short-lived Firecracker microVMs
 
-The k3s cluster the sandboxes run on enforces its posture at the admission layer — hardened `securityContext`, resource limits, network policy — so a reviewed manifest and an unreviewed one are held to the same bar. See [ADR 0016](../adr/0016-policy-as-code-admission-over-trusted-manifests.md).
+Each ETA Factory agent attempt is a Factory Worker running inside a short-lived Firecracker microVM, on a separate execution plane from the Docker-based Manager Sandboxes.
 
-### 6. Private mesh for operator shells, MFA-gated public endpoints for browser consoles
+### 6. Kubernetes Demo as separate, non-production evidence
+
+The Kubernetes Demo is a single-node k3s learning and portfolio environment, not ETA production. Its policy layer enforces workload posture at admission so reviewed and unreviewed manifests are held to the same bar. It demonstrates Kubernetes operations without claiming that Manager Sandboxes or Factory Workers run there. See [ADR 0016](../adr/0016-policy-as-code-admission-over-trusted-manifests.md).
+
+### 7. Private mesh for operator shells, MFA-gated public endpoints for browser consoles
 
 SSH left the public internet entirely; browser admin consoles that non-technical operators reach by URL stayed public but got MFA in front of them. See [ADR 0020](../adr/0020-private-mesh-for-shells-mfa-gated-public-endpoints-for-browsers.md).
 
-### 7. Runtime-injected secrets over plaintext config
+### 8. Runtime-injected secrets over plaintext config
 
 Two backends for two audiences — a broker for shared team secrets, SOPS + age for the solo-operated fleet — but one invariant: encrypted at rest, injected at runtime. See [ADR 0018](../adr/0018-runtime-injected-secrets-over-plaintext-config.md).
 
-### 8. Observability behind one collector seam
+### 9. Observability behind one collector seam
 
 Prometheus + Tempo + Loki behind a shared OpenTelemetry collector, private data plane bound to loopback, only a read-only Grafana surface exposed. Agent *usage* metrics only — prompt contents never crossed the seam. See [ADR 0021](../adr/0021-shared-collector-seam-over-direct-backend-wiring.md), [ADR 0022](../adr/0022-colocated-loki-behind-collector-seam-over-dedicated-log-stack.md).
 
@@ -66,13 +82,13 @@ Prometheus + Tempo + Loki behind a shared OpenTelemetry collector, private data 
 
 - **Zero production-data incidents** caused by agent activity across `<!-- REVIEW: N months -->` of operation.
 - **`<!-- REVIEW: X agent-hours/week -->`** of operator work now handled by the automation, gated by human approval on every consequential action.
-- **Mean provisioning time** for a new operator-facing automation dropped from `<!-- REVIEW: days -->` to `<!-- REVIEW: hours -->`, because the sandbox template, the scoped DB user, and the deploy path are now one Terraform apply.
+- **Mean provisioning time** for a new Manager Sandbox dropped from `<!-- REVIEW: days -->` to `<!-- REVIEW: hours -->`, because the container definition, scoped DB user, and deploy path are repeatable.
 - **`<!-- REVIEW: N -->`** distinct AI models integrated behind one internal API — swappable at config time — so a provider-side price change or capability shift is a config, not a rewrite.
 - **Compliance posture:** MFA on all admin consoles, no plaintext secrets in config, all admin shells behind a WireGuard mesh, full audit trail per named human on every signing action.
 
 ## What I'd do differently
 
-- **Adopt the policy layer earlier.** ADR 0016 landed after the cluster was in production. Every day between "cluster running" and "admission policy enforcing" was a day when a reviewed-but-imperfect manifest could ship a regression. Enforce posture from day one.
+- **Adopt the policy layer earlier.** ADR 0016 landed after the Kubernetes Demo was live. Every day between "demo running" and "admission policy enforcing" was a day when a reviewed-but-imperfect manifest could ship a regression. Enforce posture from day one.
 - **Cut a second observability landing zone sooner.** ADR 0021's collector seam was designed for exactly this — but I waited to add a second backend until we needed it. In hindsight, having the redundancy from the start would have made a couple of debugging sessions much shorter.
 - **Formalize the human-in-the-loop protocol earlier.** The pixel-equality gate (ADR 0010) is the pattern; the same shape should have shown up for the signing instrument (ADR 0017) and the contract-generation agents from day one instead of arriving as a retrofit.
 

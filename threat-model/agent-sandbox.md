@@ -1,6 +1,6 @@
-# Threat model — AI agent sandbox on a revenue-critical legacy system
+# Threat model — Manager Sandbox on a revenue-critical legacy system
 
-**Status:** Sanitized. This is the threat model I use to reason about running semi-autonomous AI agents against a production PHP/MySQL platform whose downtime costs real money. Names, hostnames, credentials, and vendor specifics are omitted. Where a section still needs owner sign-off before publishing, it is marked `<!-- REVIEW: ... -->`.
+**Status:** Sanitized. This is the threat model I use to reason about running semi-autonomous AI agents in Docker-based Manager Sandboxes against a production PHP/MySQL platform whose downtime costs real money. Names, hostnames, credentials, and vendor specifics are omitted. Where a section still needs owner sign-off before publishing, it is marked `<!-- REVIEW: ... -->`.
 
 Format loosely follows [OWASP Threat Modeling](https://owasp.org/www-community/Threat_Modeling): scope → assets → actors → threats → controls → residual risk.
 
@@ -10,7 +10,7 @@ Format loosely follows [OWASP Threat Modeling](https://owasp.org/www-community/T
 
 **In scope**
 
-- A per-tenant containerized agent (LLM host + orchestration harness) executing operator-authored tasks against a snapshot of the reservation DB and a scoped subset of the file system.
+- A Manager Sandbox: a role-specific Tourbot instance running in a Docker container, executing manager-authored tasks against a snapshot of the reservation DB and a scoped subset of the file system.
 - The seam between the container and the production data plane — the DB user, the network path, the credential-injection mechanism, and the write path back into production (contract PDFs, itinerary markup, correspondence).
 - The human approval gate that sits between an agent-proposed change and any consequential action.
 
@@ -19,6 +19,8 @@ Format loosely follows [OWASP Threat Modeling](https://owasp.org/www-community/T
 - LLM provider-side security (their infrastructure, their prompt-injection filters, their training data). Trust boundary sits at the network egress from the container.
 - End-user browser security for the public booking portal — separately modeled.
 - Physical security of the host.
+- Factory Workers: ETA Factory agent attempts running in short-lived Firecracker microVMs on a separate execution plane.
+- The Kubernetes Demo, a separate single-node k3s learning and portfolio environment that is not part of ETA production.
 
 ## 2. Assets
 
@@ -90,13 +92,7 @@ The threats are ordered by likelihood × consequence. Each maps to one or more c
 - **Control:** Passkeys everywhere; no SMS second factor for anyone reachable via the ops surface.
 - **Residual risk:** A compromised endpoint device (operator's laptop, malware in the browser) still authenticates as the legitimate operator. MDM + browser-side compensating controls sit outside this repo.
 
-### T6 — Cluster posture regresses via a well-intentioned but permissive manifest
-**Consequence:** A1, A5. The regression enables T1–T5.
-
-- **Control:** Cluster posture is **enforced at admission** — OPA/Gatekeeper + a ValidatingAdmissionPolicy. A manifest that drops `readOnlyRootFilesystem` or `runAsNonRoot` is rejected regardless of who authored it, human or agent. ([ADR 0016](../adr/0016-policy-as-code-admission-over-trusted-manifests.md))
-- **Residual risk:** The policy set itself must be reviewed with the same rigor as the resources it protects. The `policy/` directory lives in code review like any other component.
-
-### T7 — Backup/restore path fails when needed
+### T6 — Backup/restore path fails when needed
 **Consequence:** A1, A5, A6.
 
 - **Control:** Terraform state lives on a **different provider** than the compute it provisions, so a provider-level outage cannot destroy both simultaneously. ([ADR 0015](../adr/0015-state-off-the-provider-it-provisions.md))
@@ -104,7 +100,7 @@ The threats are ordered by likelihood × consequence. Each maps to one or more c
 - **Control:** Restore procedures are practiced on a schedule against the snapshot pipeline. `<!-- REVIEW: name your actual cadence — quarterly? monthly? -->`.
 - **Residual risk:** A restore that hasn't been tested since a schema migration will surprise you. Restore rehearsals must run *after* every schema-breaking release.
 
-### T8 — Loss of per-action attribution (audit trail gap)
+### T7 — Loss of per-action attribution (audit trail gap)
 **Consequence:** A6, cascading everywhere.
 
 - **Control:** Scoped system user per agent means shell audit logs already attribute per named identity. ([ADR 0005](../adr/0005-scoped-system-user-over-service-account.md))
