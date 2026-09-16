@@ -21,6 +21,11 @@ level - no hostnames, addresses, credentials, or vendor specifics.
 - The **Kubernetes Demo** is a separate single-node k3s learning and portfolio
   environment. It is not part of ETA production, and Manager Sandboxes do not
   run on it.
+- The **Unattended Loop** is a single-operator coding loop that picks up a
+  ticket, runs each agent iteration in a fresh microVM on a dedicated
+  low-credential box, and opens a draft pull request with nobody watching. It
+  is not a Manager Sandbox and not a Factory Worker; it is the third execution
+  plane, and ADRs 0023-0026 are about it.
 
 Most of these patterns cluster on one seam: **safely running autonomous AI
 agents against revenue-critical legacy systems**. Per-tenant isolation
@@ -35,6 +40,13 @@ without giving it the ability to damage the business. ADR
 covers the legacy-modernization case itself - proving an agent's edits to
 opaque, generated markup moved nothing visible before a human is asked to
 approve.
+
+A second cluster, ADRs [0023](adr/0023-attendedness-is-a-fourth-trust-axis.md)
+through [0027](adr/0027-pin-and-prove-unsigned-dependencies-keyed-to-the-pin.md),
+is the *unattended* version of the same problem: when nobody is watching the
+agent, which controls survive single-operator scale (a per-iteration microVM
+boundary and a short, asserted credential inventory) and which do not (the
+rest of the multi-tenant factory).
 
 ## Why ADRs
 
@@ -71,6 +83,19 @@ These also read on the web, rendered from this repo, at
 | [0020](adr/0020-private-mesh-for-shells-mfa-gated-public-endpoints-for-browsers.md) | A private mesh for operator shells, public MFA-gated endpoints for browser consoles, over one VPN for everything | Put SSH behind a WireGuard mesh and drop public :22, but keep browser admin consoles public behind per-audience MFA - size the boundary to who uses it, rather than hide the consoles non-technical staff reach by URL behind a VPN client they can't maintain |
 | [0021](adr/0021-shared-collector-seam-over-direct-backend-wiring.md) | A shared OpenTelemetry collector seam over direct backend wiring | Add one collector as the ingestion seam so new telemetry sources and backends are configuration, not new architecture - agent usage metrics only, never prompt content |
 | [0022](adr/0022-colocated-loki-behind-collector-seam-over-dedicated-log-stack.md) | Complete the logs pillar with a co-located local-disk Loki behind the collector seam, over a dedicated or hosted log stack | Add single-binary Loki beside Prometheus/Tempo on the one monitoring node, ingested only through the shared collector seam and bound to localhost - one query surface and native trace-to-logs for near-zero new infrastructure, at the cost of a deeper single-box blast radius and a 31-day local-disk retention ceiling with object storage as the written-down escape hatch |
+| [0023](adr/0023-attendedness-is-a-fourth-trust-axis.md) | Attendedness is a fourth trust axis: a per-iteration microVM boundary for unattended agents, even at single-operator scale | Re-earn exactly one subsystem - the execution boundary - because "I notice and fix" is the premise that lets solo-scale isolation collapse, and an unattended run is defined by nobody noticing; everything else in the heavy factory stays deleted |
+| [0024](adr/0024-asserted-credential-inventory-is-the-isolation-seam.md) | A short, script-asserted credential inventory on the agent box; the inventory, not the network hop, is the isolation seam | Three base credentials plus one repo token per target, asserted in both directions before every dispatch - so the box's reach is enumerable, single-host mode is gated on passing the same check, and every "just add a mail credential" reopens the two lists whose value is being short |
+| [0025](adr/0025-long-lived-model-token-in-the-boundary-over-per-iteration-renewal.md) | The model credential inside the boundary: a long-lived subscription token by environment, over per-iteration renewal or a metered key | Keep the flat-rate cost control and give up proxy-injected isolation - bounded instead by deny-all egress, a sandbox that dies per iteration, a token that revokes alone, and a diff scan that refuses to push the token pattern |
+| [0026](adr/0026-one-boundary-harness-vendor-facts-in-the-leaf.md) | The agent is a substitutable command: one boundary harness, vendor facts in a leaf | Pay a harness/leaf split and double-asserted structural tests so the loop is a claim about a technique rather than a vendor, and a third agent is a leaf, not a second copy of the lifecycle |
+| [0027](adr/0027-pin-and-prove-unsigned-dependencies-keyed-to-the-pin.md) | Enroll an unsigned third-party executable by pinning the exact artifact and keying its acceptance proof to the pin | Accept an unsignable IaC provider and a self-updating agent runner by pinning bytes, proving the pin with a real lifecycle, refusing work until the proof matches the installed pin, and never letting the dependency be the interface - a false pause is recoverable, a silently dropped boundary is not |
+| [0028](adr/0028-per-consumer-secret-manifests-and-validate-every-manifest-read.md) | One secret manifest per consumer, generated from a tracked declaration; validate every manifest the machine reads | Take on a generator, a startup assertion, and a constants file so a vault rename kills one consumer instead of the box - after a 252-reference shared manifest took down four units for six hours while the validator printed green |
+| [0029](adr/0029-pin-the-serving-checkout-fast-forward-only-edit-in-worktrees.md) | Pin the shared serving checkout fast-forward-only, refuse-and-alert on a dirty tree, edit only in worktrees | Give up "restart and it's live" on one service to stop the inverted-signal failure where the newest commit carries the oldest content - the pin is a detector, the default worktree and a stale-path pre-commit hook are the barrier |
+| [0030](adr/0030-immutable-releases-atomic-promotion-append-only-journal.md) | Immutable per-commit releases, atomic promotion, an append-only journal; re-promotion is a named attended operation; root-pinned authority drift is reported, never a failure | Pay a promoter and a journal so no exit leaves production unnamed, hand-editing the symlink is the thing the design refuses, and a merge can never expand what root pinned - drift is shown, not paged |
+| [0031](adr/0031-ci-deploy-key-restricted-to-one-forced-command-over-host-pull.md) | A CI deploy key that reaches a shared host, restricted to one installed forced command, over having the host pull | Let a CI secret reach a host that serves client work because it cannot open a shell - forced command outside the deployed tree, pinned host key - in exchange for sub-minute deploys without a listener or a timer |
+| [0032](adr/0032-dedicated-host-for-unauthenticated-ingestion-store-private-by-construction.md) | The first unauthenticated-ingestion workload gets its own host; store private by construction; admin gated by a named permission; masking proof per property; abort written before launch | Pay a dedicated small host and a volume so browser-driven POSTs never land beside fleet keys or prod sandboxes, and prove masking by grepping the store for planted strings rather than looking at the player |
+| [0033](adr/0033-grow-the-disk-and-cap-retention-by-size.md) | Grow the monitoring host's own disk over a block volume, and cap retention by size | Take a one-way, power-off resize because a grandfathered allocation made it free - and accept that the bigger disk is not the guard; the size-based retention cap and log hygiene are |
+| [0034](adr/0034-root-allowlist-with-404-over-blocklist-with-403-for-a-legacy-webroot.md) | A strict root allowlist returning 404 over a growing blocklist returning 403, for a legacy repository-as-webroot | Fail closed against files nobody anticipated and stop confirming their existence to scanners, without the multi-quarter refactor of moving the document root - which the allowlist now guards |
+| [0035](adr/0035-sandbox-namespaces-under-systemd-hardening-prove-from-the-live-unit.md) | Let the hardened service create namespaces so the sandbox can confine the model; hold the boundary in AppArmor; prove from the live unit | Loosen one systemd restriction that no narrower setting can express, keep the kernel and profile layers that make it safe, and never again certify a sandbox from an attended shell that the service could not start |
 
 A concrete, sanitized companion to ADR 0011 lives in
 [`observability/`](observability/): the Prometheus/Alertmanager config and
@@ -78,6 +103,11 @@ Grafana dashboards that make the pattern reproducible. A companion to ADRs
 0013-0015 - the full Terraform/Cloudflare/Ansible DNS-as-code repo, sanitized -
 lives at
 [terraform-cloudflare-dns](https://github.com/JacobStephens2/terraform-cloudflare-dns).
+The runtime-secrets launcher that ADRs 0018 and 0028 describe - manifest
+validation over every file a machine reads - lives at
+[vaulted-agent](https://github.com/JacobStephens2/vaulted-agent).
+The unattended loop behind ADRs 0023-0026 lives at
+[tracewake](https://github.com/JacobStephens2/tracewake).
 A companion to ADR 0016 - the separate, non-production Kubernetes Demo whose
 posture the policy set enforces - lives at [k3s-demo](https://github.com/JacobStephens2/k3s-demo)
 (`k3s-demo.stephens.page`), with the manifests under
