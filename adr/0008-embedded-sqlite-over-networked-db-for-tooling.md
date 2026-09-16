@@ -35,3 +35,13 @@ The moment the data must be shared across hosts, outlive the node, or take
 concurrent writers, it belongs in the managed tier of ADR 0002. The deciding
 question is *who owns the state* - one process on one host, or the business -
 not how many rows it is.
+
+**Revisited (2026-08):** the unattended loop's scheduler journal - single
+writer, append-only, scan-to-render, exactly this tier - went to a local
+PostgreSQL instance over the unix socket instead, for the one thing a file
+cannot do: `LISTEN/NOTIFY`, so an insert reaches the operator's dashboard as a
+server-sent push instead of a poll. Peer auth, no network listener, no new
+credential; the rule above still holds because the state still has one owner
+on one host. SQLite was the middle option and lost to both ends: schema
+ceremony without the push. The deciding question gained a clause - *who owns
+the state, and does a write need to wake anything?*
