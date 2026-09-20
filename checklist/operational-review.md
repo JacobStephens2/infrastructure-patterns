@@ -14,7 +14,7 @@ The ADRs in [`../adr/`](../adr/) explain *why* each pattern exists. This checkli
   Ideally: exactly one host, one DB user, one purpose. If a credential is portable off its host or reaches more than one tenant's data, that's the finding.
   → [ADR 0009 host-pinned DB access](../adr/0009-default-deny-host-pinned-db-access.md), [ADR 0005 scoped system user](../adr/0005-scoped-system-user-over-service-account.md)
 
-- [ ] **Where is the outer isolation boundary drawn — host, container, network, DB?**
+- [ ] **Where is the outer isolation boundary drawn - host, container, network, DB?**
   Ideally: named explicitly. If it's implicit, it's not a boundary.
   → [ADR 0001 container isolation](../adr/0001-docker-over-bare-metal-for-tenant-isolation.md)
 
@@ -44,7 +44,7 @@ The ADRs in [`../adr/`](../adr/) explain *why* each pattern exists. This checkli
 
 - [ ] **What is the documented RTO/RPO, and does the last restore drill match it?**
   Ideally: numbers, not adjectives.
-  Actual: `<!-- REVIEW: your numbers here -->`
+  Actual: write the measured numbers from the last drill here. If there has been no drill, that is the finding.
 
 - [ ] **Is the DB durable and backed up outside its runtime, or is it inside a container that could disappear?**
   Ideally: external managed store, or an operationally-serious self-managed one with tested backups.
@@ -60,7 +60,7 @@ The ADRs in [`../adr/`](../adr/) explain *why* each pattern exists. This checkli
   Ideally: encrypted at rest with an offline recovery path, and the recovery key isn't held by the same cloud that runs the workload.
 
 - [ ] **Can a compromised container read secrets belonging to another container on the same host?**
-  Ideally: no — per-tenant secret scope, injected only into the process that needs it.
+  Ideally: no - per-tenant secret scope, injected only into the process that needs it.
 
 - [ ] **Is there any secret in a plaintext env file committed to a repo (including "sanitized" fixtures)?**
   Ideally: no; anything that ever went into a real environment should be treated as rotated regardless of how it's now sanitized. `git log -p` on secrets paths finds these.
@@ -112,7 +112,7 @@ The ADRs in [`../adr/`](../adr/) explain *why* each pattern exists. This checkli
   Ideally: no. Bound to loopback; only a read-only pane (Grafana) exposed, and even that behind the same auth as the rest of the ops surface.
 
 - [ ] **Do agent-usage metrics flow, and does prompt *content* deliberately not?**
-  Ideally: yes to the first, yes to the second — the collector's scrub rules make it explicit.
+  Ideally: yes to the first, yes to the second - the collector's scrub rules make it explicit.
 
 - [ ] **Is there a per-action audit trail that survives a container restart?**
   Ideally: yes; logs are shipped off the container before the container can die.
@@ -121,7 +121,7 @@ The ADRs in [`../adr/`](../adr/) explain *why* each pattern exists. This checkli
 ## 6. Deploy
 
 - [ ] **How does a change get to production, and who can trigger that path?**
-  Ideally: named, auditable, and testable — even if it's a shell script rather than a hosted CI runner.
+  Ideally: named, auditable, and testable - even if it's a shell script rather than a hosted CI runner.
   → [ADR 0004 guarded shell deploy](../adr/0004-shell-deploy-over-hosted-ci-runner.md)
 
 - [ ] **Are hosts provisioned declaratively, and can I rebuild any of them from Git?**
@@ -160,7 +160,7 @@ The ADRs in [`../adr/`](../adr/) explain *why* each pattern exists. This checkli
 
 - [ ] **Do workloads run non-root, read-only rootfs, drop all capabilities, with resource requests/limits?**
   Ideally: yes, and the admission policy proves it.
-  → [`k3s-demo`](https://github.com/JacobStephens2/k3s-demo) — the reference manifests
+  → [`k3s-demo`](https://github.com/JacobStephens2/k3s-demo) - the reference manifests
 
 - [ ] **Do probes reflect real readiness/liveness, not just "port listens"?**
   Ideally: yes. A probe that passes on a hung app is worse than no probe.
@@ -168,14 +168,14 @@ The ADRs in [`../adr/`](../adr/) explain *why* each pattern exists. This checkli
 ## 8. Agent-specific
 
 - [ ] **Does every consequential agent output pass through a human gate?**
-  Ideally: yes, and the gate isn't rubber-stampable at scale — the reviewer has evidence-in-hand (a pixel diff, a summarized DB delta, a preview render) rather than a wall of unstructured text.
+  Ideally: yes, and the gate isn't rubber-stampable at scale - the reviewer has evidence-in-hand (a pixel diff, a summarized DB delta, a preview render) rather than a wall of unstructured text.
   → [ADR 0010 pixel-equality gate](../adr/0010-pixel-equality-gate-over-diff-review-for-generated-markup.md), [ADR 0017 self-hosted signing](../adr/0017-self-hosted-signing-instrument-over-saas.md)
 
 - [ ] **Is the agent's tool surface enumerated in an allow-list?**
   Ideally: yes; nothing is proxied by default.
 
 - [ ] **Is retrieved / ingested content treated as untrusted?**
-  Ideally: yes — inbound email, retrieved web pages, and user-uploaded documents pass through a scrubber for instruction-shaped patterns before entering the context.
+  Ideally: yes - inbound email, retrieved web pages, and user-uploaded documents pass through a scrubber for instruction-shaped patterns before entering the context.
 
 - [ ] **Is the LLM provider swappable at config time?**
   Ideally: yes; a price or capability shift is a config change, not a rewrite. Multi-provider is a resilience property, not a feature.
@@ -224,8 +224,8 @@ The ADRs in [`../adr/`](../adr/) explain *why* each pattern exists. This checkli
   Ideally: yes. An ADR without a trade-off section is a design note, not a decision record.
 
 - [ ] **Are the ADRs revisited when the trade-offs change?**
-  Ideally: yes — a "when I'd revisit" section is on every ADR here.
+  Ideally: yes - a "when I'd revisit" section is on every ADR here.
 
 ---
 
-*Written by Jacob Stephens. This is the checklist I actually run — not an aspirational one. If you use it and find a gap, that's the point.*
+*Written by Jacob Stephens. This is the checklist I actually run - not an aspirational one. If you use it and find a gap, that's the point.*
