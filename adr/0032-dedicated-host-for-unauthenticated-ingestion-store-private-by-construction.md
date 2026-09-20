@@ -1,6 +1,6 @@
 # ADR 0032 - The first workload with unauthenticated browser ingestion gets its own host; the store is private by construction; admin is gated by a named permission; proof is per property, and the abort is written before launch
 
-**Status:** Accepted · in production (a self-hosted web analytics and session-replay stack across eleven properties)
+**Status:** Accepted · host, store, and retention machinery in production (a self-hosted web analytics and session-replay stack scoped to eleven properties; recording is enabled per property behind the launch gates this ADR describes)
 
 ## Context
 
