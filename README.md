@@ -1,7 +1,8 @@
 # infrastructure-patterns
 
-Architecture Decision Records from systems I run in production, sanitized and
-generalized so the *reasoning* is visible even where the code cannot be.
+The curated home for my best Architecture Decision Records, from every system
+I run in production - private and public - written so the *reasoning* is
+visible even where the code cannot be.
 
 Every record here comes from something that is live and that someone uses. Each
 one states what I chose, what I gave up, and when I would choose differently.
@@ -10,9 +11,15 @@ the record: a dashboard query that went from 1,441 seconds to 0.196, a
 six-hour outage behind a validator that printed green, a ticket whose count of
 276 had become 303 by the time an agent picked it up.
 
-Most of the source repositories are private. These are the parts that
-generalize, written at the architecture level - no hostnames, addresses,
-credentials, customer data, or colleagues' names.
+Records come from two kinds of source, and each says which it is.
+
+- **From a private system:** sanitized and written at the architecture level -
+  no hostnames, addresses, credentials, customer data, or colleagues' names.
+  The record here is the only public copy.
+- **From a public repository:** the record carries a **Source** line. The
+  original lives in that repository beside the code it governs and is the
+  canonical copy; what is here is the generalized write-up, so the pattern can
+  be read without the project's vocabulary.
 
 ## Where these come from
 
@@ -189,4 +196,5 @@ The ADRs answer *why*. These answer *how it fits together*.
 
 Each ADR uses a short, consistent shape: **Context, Decision, Consequences,
 When I'd revisit.** The status line says where the decision is running and who
-depends on it. They are deliberately terse.
+depends on it, and a Source line follows it when the original is public. They
+are deliberately terse.
