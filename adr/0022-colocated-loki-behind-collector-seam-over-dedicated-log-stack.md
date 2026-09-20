@@ -57,7 +57,7 @@ and keep it private on localhost. Concretely:
 
 - **Sources are sequenced by debugging value, not by host.** The monitoring
   host's own journald first (proves the pipeline end to end), then the
-  highest-payoff sources - tourbot prod Apache/PHP errors, the MySQL slow-query
+  highest-payoff sources - the production platform's Apache/PHP errors, the MySQL slow-query
   log (so slow-query *rate* charts beside the DB-CPU graphs from the ongoing N+1
   work), then journald fleet-wide for auth/SSH visibility, which is where the
   security and PCI value sits.
@@ -118,7 +118,7 @@ has headroom rather than crowding the alerting it shares a box with.
 
 ## Follow-ups
 
-- Ship the high-value sources (tourbot prod Apache/PHP, MySQL slow-query log),
+- Ship the high-value sources (the production platform's Apache/PHP, MySQL slow-query log),
   then journald fleet-wide, via per-host shippers (Grafana Alloy or otelcol)
   exporting OTLP to the collector - never direct to Loki.
 - Convert the Tempo datasource to file provisioning alongside Loki so the

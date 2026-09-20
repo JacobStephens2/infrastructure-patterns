@@ -2,6 +2,8 @@
 
 **Status:** Accepted · in production (extends [ADR 0018](0018-runtime-injected-secrets-over-plaintext-config.md) after a six-hour outage)
 
+**Source:** [vaulted-agent](https://github.com/JacobStephens2/vaulted-agent), a public repository. The original record is ADR 0006 under its [`docs/adr/`](https://github.com/JacobStephens2/vaulted-agent/tree/main/docs/adr), beside the code it governs. That record covers validating every manifest a machine reads; the per-consumer split is from the private fleet that runs it.
+
 ## Context
 
 ADR 0018's broker design resolves a manifest of vault references into a

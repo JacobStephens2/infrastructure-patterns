@@ -2,6 +2,8 @@
 
 **Status:** Accepted · in production (inventory asserted before every dispatch; single-host mode gated on it)
 
+**Source:** [Tracewake](https://github.com/JacobStephens2/tracewake), a public repository. The original records are ADR 0009 and 0019 under its [`docs/adr/`](https://github.com/JacobStephens2/tracewake/tree/main/docs/adr), beside the code they govern. This is the generalized write-up.
+
 ## Context
 
 [ADR 0023](0023-attendedness-is-a-fourth-trust-axis.md) put unattended agent
