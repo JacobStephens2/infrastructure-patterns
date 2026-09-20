@@ -2,6 +2,8 @@
 
 **Status:** Accepted · in production (an unattended coding loop dispatching every thirty minutes; two vendors' CLI agents run under the same boundary)
 
+**Source:** [Tracewake](https://github.com/JacobStephens2/tracewake), a public repository. The original record is ADR 0003 under its [`docs/adr/`](https://github.com/JacobStephens2/tracewake/tree/main/docs/adr), beside the code it governs. This is the generalized write-up.
+
 ## Context
 
 The usual argument for stripping isolation at single-operator scale decomposes

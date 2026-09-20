@@ -10,7 +10,7 @@ Format loosely follows [OWASP Threat Modeling](https://owasp.org/www-community/T
 
 **In scope**
 
-- A Manager Sandbox: a role-specific Tourbot instance running in a Docker container, executing manager-authored tasks against a snapshot of the reservation DB and a scoped subset of the file system.
+- A Manager Sandbox: a role-specific instance of the platform running in a Docker container, executing manager-authored tasks against a snapshot of the reservation DB and a scoped subset of the file system.
 - The seam between the container and the production data plane - the DB user, the network path, the credential-injection mechanism, and the write path back into production (contract PDFs, itinerary markup, correspondence).
 - The human approval gate that sits between an agent-proposed change and any consequential action.
 
@@ -19,9 +19,7 @@ Format loosely follows [OWASP Threat Modeling](https://owasp.org/www-community/T
 - LLM provider-side security (their infrastructure, their prompt-injection filters, their training data). Trust boundary sits at the network egress from the container.
 - End-user browser security for the public booking portal - separately modeled.
 - Physical security of the host.
-- Factory Workers: ETA Factory agent attempts running in short-lived Firecracker microVMs on a separate execution plane.
-- The Kubernetes Demo, a separate single-node k3s learning and portfolio environment that is not part of ETA production.
-- The Unattended Loop is *partly* in scope: its execution boundary and credential inventory are modeled here because they are the same seam (an agent with real reach and nobody watching). Its scheduler, journal, and dashboard are not.
+- Tracewake, the unattended coding loop, is *partly* in scope: its execution boundary and credential inventory are modeled here because they are the same seam (an agent with real reach and nobody watching). Its scheduler, journal, and dashboard are not.
 
 ## 2. Assets
 

@@ -2,6 +2,8 @@
 
 **Status:** Accepted · in production
 
+**Companion code:** [terraform-cloudflare-dns](https://github.com/JacobStephens2/terraform-cloudflare-dns), a public, sanitized mirror showing the off-provider state backend.
+
 ## Context
 
 Terraform records what it manages in a state file that has to live somewhere

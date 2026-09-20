@@ -1,6 +1,8 @@
 # ADR 0038 - The guardrail reads every tree that runs unattended, and unknown is never green
 
-**Status:** Accepted · in production (read and journaled at the start of every cycle of the unattended loop)
+**Status:** Accepted · in production (read and journaled at the start of every Tracewake cycle)
+
+**Source:** [Tracewake](https://github.com/JacobStephens2/tracewake), a public repository. The original record is ADR 0026 under its [`docs/adr/`](https://github.com/JacobStephens2/tracewake/tree/main/docs/adr), beside the code it governs. This is the generalized write-up.
 
 ## Context
 

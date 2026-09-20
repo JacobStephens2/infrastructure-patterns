@@ -1,6 +1,8 @@
 # ADR 0036 - Bound unattended dispatch by human review capacity, over a daily spend cap
 
-**Status:** Accepted · in production (the unattended loop from [ADR 0023](0023-attendedness-is-a-fourth-trust-axis.md), dispatching against a live product's work tracker)
+**Status:** Accepted · in production (Tracewake, the unattended loop from [ADR 0023](0023-attendedness-is-a-fourth-trust-axis.md), dispatching against a live product's work tracker)
+
+**Source:** [Tracewake](https://github.com/JacobStephens2/tracewake), a public repository. The original record is ADR 0022 under its [`docs/adr/`](https://github.com/JacobStephens2/tracewake/tree/main/docs/adr), beside the code it governs. This is the generalized write-up.
 
 ## Context
 

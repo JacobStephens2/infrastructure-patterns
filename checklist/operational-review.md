@@ -156,11 +156,9 @@ The ADRs in [`../adr/`](../adr/) explain *why* each pattern exists. This checkli
 
 - [ ] **Is cluster posture enforced at admission, not by review?**
   Ideally: yes. Reviewed and un-reviewed manifests are held to the same bar because the API server rejects both when they violate policy.
-  → [ADR 0016 policy-as-code admission](../adr/0016-policy-as-code-admission-over-trusted-manifests.md)
 
 - [ ] **Do workloads run non-root, read-only rootfs, drop all capabilities, with resource requests/limits?**
   Ideally: yes, and the admission policy proves it.
-  → [`k3s-demo`](https://github.com/JacobStephens2/k3s-demo) - the reference manifests
 
 - [ ] **Do probes reflect real readiness/liveness, not just "port listens"?**
   Ideally: yes. A probe that passes on a hung app is worse than no probe.

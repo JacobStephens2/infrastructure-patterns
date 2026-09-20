@@ -1,6 +1,8 @@
 # ADR 0048 - Ship static musl release binaries with a CI guard, over glibc builds from whatever the runner has
 
-**Status:** Accepted · shipped (the published Linux release assets of [vaulted-agent](https://github.com/JacobStephens2/vaulted-agent), the open-source secrets launcher behind [ADR 0028](0028-per-consumer-secret-manifests-and-validate-every-manifest-read.md))
+**Status:** Accepted · shipped (the published Linux release assets of the open-source secrets launcher behind [ADR 0028](0028-per-consumer-secret-manifests-and-validate-every-manifest-read.md))
+
+**Source:** [vaulted-agent](https://github.com/JacobStephens2/vaulted-agent), a public repository. The original record is ADR 0001 under its [`docs/adr/`](https://github.com/JacobStephens2/vaulted-agent/tree/main/docs/adr), beside the code it governs.
 
 ## Context
 

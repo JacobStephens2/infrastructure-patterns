@@ -2,6 +2,8 @@
 
 **Status:** Accepted · in production
 
+**Companion code:** [terraform-cloudflare-dns](https://github.com/JacobStephens2/terraform-cloudflare-dns), a public, sanitized mirror of the repository that performed this import.
+
 ## Context
 
 A fleet of ~220 DNS records across 9 zones (A, CNAME, MX, TXT, SRV) had just been

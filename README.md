@@ -20,7 +20,7 @@ credentials, customer data, or colleagues' names.
 |---|---|---|
 | **A reservations and operations platform** for a group-travel operator: a PHP 8 / MySQL 8 core modernized in production from PHP 5 / MySQL 5, four portals on one schema. I am its lead engineer. Private. | Office staff daily; tour guides in the field through an offline-capable portal | 0002, 0004, 0006, 0034, 0042-0044 |
 | **The fleet platform around it**: guarded deploys, an operator console, secrets, observability across the hosts, and Docker-based Manager Sandboxes where non-technical managers work with an AI assistant on a copy of production data. Private. | Me, the engineers I work with, and the managers who own a sandbox | 0001, 0003, 0005, 0007-0009, 0011, 0018-0022, 0028-0030, 0032, 0033, 0040, 0041, 0045-0047 |
-| **The Unattended Loop** ([tracewake](https://github.com/JacobStephens2/tracewake)): picks up a ticket, runs each agent iteration in a fresh microVM, opens a draft pull request with nobody watching. Public. | Me, dispatching against the platform's real work tracker | 0023-0027, 0036-0039 |
+| **[Tracewake](https://github.com/JacobStephens2/tracewake)**, an unattended coding loop: picks up a ticket, runs each agent iteration in a fresh microVM, opens a draft pull request with nobody watching. Public. | Me, dispatching against the platform's real work tracker | 0023-0027, 0036-0039 |
 | **[vaulted-agent](https://github.com/JacobStephens2/vaulted-agent)**: a Rust launcher that resolves per-agent secret manifests into a child process's environment. Public, released. | The fleet above, and anyone who installs it | 0028, 0048 |
 | **A paid, privacy-sensitive charting app** on the web, the App Store, and the Play Store, with end-to-end encrypted sync and subscription billing ([architecture slice](https://github.com/JacobStephens2/chart35-showcase)). | Customers on the web, iOS, and Android | 0012, 0049, 0050 |
 | **My own fleet**: one VPS serving about 70 hostnames for my products and client sites, with DNS as code across 9 zones ([sanitized mirror](https://github.com/JacobStephens2/terraform-cloudflare-dns)). | Me and my clients | 0014, 0015, 0017, 0031 |
@@ -28,24 +28,17 @@ credentials, customer data, or colleagues' names.
 
 ## Evidence boundary
 
-Four environments do four different jobs, and I keep them apart on purpose.
+Two environments do two different jobs, and I keep them apart on purpose.
 
 - A **Manager Sandbox** is a role-specific instance of the platform running in
   a Docker container. It gives a manager and an AI assistant an isolated place
   to explore data and prototype changes before human-reviewed promotion.
-- The **Unattended Loop** is a single-operator coding loop. Each agent
+- **Tracewake** is a single-operator unattended coding loop. Each agent
   iteration runs in a fresh microVM under a short, asserted credential
-  inventory. It is not a Manager Sandbox.
-- A **Factory Worker** is one agent attempt in a separate, heavier
-  multi-tenant agent factory, which runs attempts in short-lived Firecracker
-  microVMs. No record here is drawn from it. ADR
-  [0023](adr/0023-attendedness-is-a-fourth-trust-axis.md) is about which one of
-  its controls survived to single-operator scale and why the rest did not.
-- The **Kubernetes Demo** is a separate single-node k3s learning and portfolio
-  environment. It is not part of any production system above, and nothing
-  above runs on it. ADR
-  [0016](adr/0016-policy-as-code-admission-over-trusted-manifests.md) is its
-  one record and says so in its status line.
+  inventory. It is not a Manager Sandbox. ADR
+  [0023](adr/0023-attendedness-is-a-fourth-trust-axis.md) is about why that
+  one boundary is worth its cost at single-operator scale and a heavier
+  multi-tenant design is not.
 
 ## Start here
 
@@ -83,8 +76,8 @@ Eight records that show the range, if you only read a few.
 
 ## Decision records
 
-All 51 records, grouped by the problem they belong to. Numbers are
-chronological and never reused. These also read on the web, rendered from this
+All 50 records, grouped by the problem they belong to. Numbers are
+chronological and never reused, so a gap is a record that was withdrawn. These also read on the web, rendered from this
 repo, at [stephens.page/decisions](https://stephens.page/decisions/).
 
 ### Running AI agents against production systems
@@ -164,28 +157,17 @@ Isolation, identity, and credentials first (0001-0010), then the unattended case
 | [0033](adr/0033-grow-the-disk-and-cap-retention-by-size.md) | Grow the monitoring host's own disk over a block volume, and cap retention by size | Take a one-way, power-off resize because a grandfathered allocation made it free - and accept that the bigger disk is not the guard; the size-based retention cap and log hygiene are |
 | [0032](adr/0032-dedicated-host-for-unauthenticated-ingestion-store-private-by-construction.md) | The first unauthenticated-ingestion workload gets its own host; store private by construction; admin gated by a named permission; masking proof per property; abort written before launch | Pay a dedicated small host and a volume so browser-driven POSTs never land beside fleet keys or prod sandboxes, and prove masking by grepping the store for planted strings rather than looking at the player |
 
-### Lab - live, but not production
-
-Hands-on Kubernetes evidence from a separate learning environment. Nothing above runs on it.
-
-| # | Decision | Trade-off in one line |
-|---|----------|------------------------|
-| [0016](adr/0016-policy-as-code-admission-over-trusted-manifests.md) | Enforce cluster posture at admission (OPA/Gatekeeper + a VAP) over trusting reviewed manifests | Run a policy controller so the hardened posture is rejected-if-violated at the API server instead of relying on review - the control that matters once a second actor or an agent can apply to the cluster |
-
 ## Companion code
 
 - [`observability/`](observability/) - the sanitized Prometheus and
   Alertmanager configuration and Grafana dashboards behind ADR 0011.
-- [tracewake](https://github.com/JacobStephens2/tracewake) - the unattended
-  loop behind ADRs 0023-0026 and 0036-0039.
+- [Tracewake](https://github.com/JacobStephens2/tracewake) - the unattended
+  coding loop behind ADRs 0023-0026 and 0036-0039.
 - [vaulted-agent](https://github.com/JacobStephens2/vaulted-agent) - the
   runtime-secrets launcher behind ADRs 0018, 0028, and 0048.
 - [terraform-cloudflare-dns](https://github.com/JacobStephens2/terraform-cloudflare-dns) -
   the sanitized Terraform, Cloudflare, and Ansible DNS-as-code repo behind ADRs
   0013-0015.
-- [k3s-demo](https://github.com/JacobStephens2/k3s-demo) - the separate,
-  non-production Kubernetes Demo behind ADR 0016, with its policy set under
-  [`policy/`](https://github.com/JacobStephens2/k3s-demo/tree/main/policy).
 
 ## Companion artifacts
 

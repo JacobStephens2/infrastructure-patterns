@@ -5,7 +5,7 @@
 ## Context
 
 I needed to give each of several non-technical business managers a role-specific
-Tourbot instance: a **Manager Sandbox** able to run an autonomous
+instance of the platform: a **Manager Sandbox** able to run an autonomous
 coding agent that could read a copy of production data and even edit code,
 without any tenant being able to see or damage another's data, the host, or
 production. Running all tenants as processes on one host (bare-metal, shared

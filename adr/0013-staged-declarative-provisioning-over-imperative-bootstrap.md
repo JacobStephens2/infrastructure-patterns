@@ -2,6 +2,8 @@
 
 **Status:** Accepted · in production
 
+**Companion code:** [terraform-cloudflare-dns](https://github.com/JacobStephens2/terraform-cloudflare-dns), a public, sanitized mirror of the infrastructure-as-code repository this pattern comes from.
+
 ## Context
 
 A new self-hosted service - a multi-service LLM research tool, several containers

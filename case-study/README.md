@@ -11,19 +11,14 @@ it look like now, and what changed that mattered*.
 
 ---
 
-## Four environments, four purposes
+## Two environments, two purposes
 
 - A **Manager Sandbox** is a role-specific instance of the platform running in
   a Docker container. Managers use these isolated copies to explore data and
   prototype changes before human-reviewed promotion.
-- The **Unattended Loop** is a single-operator coding loop that runs each agent
+- **Tracewake** is a single-operator unattended coding loop that runs each agent
   iteration in a fresh microVM and opens a draft pull request with nobody
   watching.
-- A **Factory Worker** is one agent attempt in a separate, heavier agent
-  factory, running inside a short-lived Firecracker microVM. It is not a
-  Manager Sandbox, and nothing in this case study depends on it.
-- The **Kubernetes Demo** is a separate single-node k3s learning and portfolio
-  environment. It is not part of production, and nothing here runs on it.
 
 ## The system I inherited
 

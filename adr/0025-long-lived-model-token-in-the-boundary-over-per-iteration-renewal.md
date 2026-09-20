@@ -2,6 +2,8 @@
 
 **Status:** Accepted · in production (supersedes an eight-hour session file renewed per iteration)
 
+**Source:** [Tracewake](https://github.com/JacobStephens2/tracewake), a public repository. The original record is ADR 0020 under its [`docs/adr/`](https://github.com/JacobStephens2/tracewake/tree/main/docs/adr), beside the code it governs. This is the generalized write-up.
+
 ## Context
 
 An unattended agent iteration ([ADR 0023](0023-attendedness-is-a-fourth-trust-axis.md))
