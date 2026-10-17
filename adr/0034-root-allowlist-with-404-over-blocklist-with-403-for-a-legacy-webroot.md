@@ -1,6 +1,6 @@
 # ADR 0034 - A strict root allowlist returning 404 over a growing blocklist returning 403, for a legacy repository-as-webroot
 
-**Status:** Accepted · in production (twenty-year-old PHP monolith whose repository root is the document root)
+**Status:** Accepted · in production (legacy PHP repository-as-webroot; perimeter additions reviewed 2026-10-16)
 
 ## Context
 
@@ -55,12 +55,28 @@ in two large sub-applications.
   the functional test - which makes "why is this public?" a reviewable diff.
 - **Internal tooling cannot be inspected or executed over HTTP**, including
   the container configuration and the vendored dependency tree.
-- **Related, same repo:** the audit trail for settings changes now records who
-  changed a secret-bearing field and when, but redacts old and new values and
-  omits the field from restorable snapshots, migrating existing history even
-  though that makes old values unrecoverable. An audit trail is not a
-  credential store; retaining credentials there expands both their lifetime
-  and their audience.
+- **Related, same repo:** the audit trail for changes to user records keeps
+  who changed a secret-bearing field and when, redacts old and new values,
+  and omits the field from restorable snapshots.
+  [ADR 0043](0043-audit-history-never-retains-secret-values-retroactively.md)
+  records that separate decision; it is not a claim about every history store.
+- **The allowlist has a defined scope.** It guards public HTTP entrypoints,
+  not every other form of authority.
+  [ADR 0062](0062-tests-refuse-the-production-schema-and-a-wiring-check-enforces-it.md)
+  explains why a database test guard uses a different rule and puts its
+  allowlist in the wiring check.
+
+## Amendment - 2026-10-16
+
+The live perimeter also returns 404 for dotfiles and dot-directories anywhere
+in the path, except the certificate-validation challenge route, and for Markdown
+files anywhere in the repository. These rules are covered by a separate
+functional test rather than left implicit in the root-only allowlist.
+
+Uploaded application files need a third state: served, but only after login.
+Their requests go through an application gate that checks the session and
+streams the file instead of serving or executing it directly. A directory the
+application must link into cannot simply join the list of shielded directories.
 
 ## When I'd revisit
 

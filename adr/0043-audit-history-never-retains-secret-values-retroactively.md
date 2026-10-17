@@ -49,8 +49,8 @@ field changed, *who* changed it, and *when*. It never keeps the value.
 - **Matching by name is a heuristic with both failure directions.** A secret in
   a field with an innocuous name is missed, and a harmless field with a
   credential-shaped name loses its history. The matcher was adjusted twice on
-  the day it shipped, once to tighten it and once to widen it. Centralizing it in one class is
-  what makes the next correction a one-line change that applies everywhere.
+  the day it shipped, once to tighten it and once to widen it. Centralizing it in
+  one class makes the next correction a one-line change that applies everywhere.
 - Backups taken before the migration still hold the old values until they age
   out. The migration fixes the table, not the past.
 

@@ -1,16 +1,15 @@
 # ADR 0030 - Immutable per-commit releases with atomic promotion and an append-only journal; re-promotion is a named attended operation; root-pinned authority drift is reported, never a failure
 
-**Status:** Accepted · in production (an internet-facing service promoted automatically on human merge)
+**Status:** Accepted · in production (a personal web application promoted automatically on human merge)
 
 ## Context
 
 [ADR 0004](0004-shell-deploy-over-hosted-ci-runner.md) chose a guarded shell
-deploy. This service raised the bar: a merge to main should reach production
-within a minute without a human at a terminal, every switch must be
-verifiable and reversible, and the promotion path must not be able to expand
-root's authority on the host - because the same host runs a model-executing
-subagent under systemd hardening and AppArmor profiles that root pinned on
-purpose ([ADR 0035](0035-sandbox-namespaces-under-systemd-hardening-prove-from-the-live-unit.md)).
+deploy. A separate personal web application raised the bar: a merge to main
+should reach production within a minute without a human at a terminal. Every
+switch must be verifiable and reversible, and automatic promotion must not
+expand root's authority on the host. Release code and the authority that
+installs system services have different owners and update paths.
 
 Two later situations tested the shape. A merge had reached production before
 the post-promotion appearance verifier existed, and could never be verified,
@@ -68,8 +67,8 @@ must not apply.
   and let the next real merge prove it end to end: no new code, production
   moves once instead of twice.
 - **Changing a unit or a profile reaches the host only through the attended
-  upgrade** from a merged, promoted release. Copying the unit by hand is not
-  the remedy; neither is loosening the kernel setting the profile depends on.
+  upgrade** from a merged, promoted release. Copying the unit or profile by
+  hand would bypass the reviewed authority change.
 
 ## When I'd revisit
 

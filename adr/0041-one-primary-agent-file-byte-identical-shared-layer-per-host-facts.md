@@ -1,6 +1,6 @@
 # ADR 0041 - One primary agent instruction file, a byte-identical shared layer, and per-host environment facts beside it
 
-**Status:** Accepted · in production (every host in the fleet where a coding agent runs; migration finished 2026-08)
+**Status:** Accepted · in production (neutral primary files across the fleet; shared-layer checks cover five web hosts, with two environments verified whole)
 
 ## Context
 
@@ -11,8 +11,8 @@ vendor-specific instruction file; the other three read the vendor-neutral
 Every host-specific warning lived in the vendor-specific file. So a session
 started under a different harness on one staging-tier host was never told the
 one fact that mattered most about that machine: its database connection is the
-production one. Nothing in the setup stood between that session and a write
-to production, and the gap was invisible from inside any single harness.
+production one. The environment's most consequential fact was absent from
+the file that harness read.
 
 Looking at the files made it worse. The five web-host instruction files shared
 93 byte-identical lines, while their supposedly generic 125-line middle had
@@ -25,8 +25,10 @@ drifted into five distinct versions.
 - **Per-environment facts live in a separate `ENVIRONMENT.md`**, reached by a
   one-line pointer from `AGENTS.md`. It states which database this environment
   touches and whether an agent may write to it, and little else.
-- **The shared layer stays its own byte-identical file on every host**, and the
-  sync tool gains a fleet-wide checksum check.
+- **The shared layer stays its own byte-identical file on every web host**,
+  checked by the sync tool. Membership follows identity: if a sentence needs
+  different wording in an environment, that environment is not in the shared
+  set and its whole file is verified against its own source.
 - **`ENVIRONMENT.md` is untracked and gitignored.** That is safe because the
   deploy script refuses only *tracked* dirtiness, so an untracked file never
   blocks a deploy.
@@ -56,6 +58,20 @@ split can be trusted.
   owns the code**, reached by pointer. Migration discipline lives once.
 - **One line had to be added to a file another repository owns**, by pull
   request. That is the cost of putting the pointer where it will be read.
+
+## Amendment - 2026-10-16
+
+The shared-layer check now covers five web hosts. Two other environments take
+their whole source files without the layer and are checked whole by the normal
+verification run. A claim that was true on the web hosts was false elsewhere;
+sharing follows the truth of the text, not the convenience of one template.
+
+The sandbox fleet also puts a per-role permission pointer in the generated
+`ENVIRONMENT.md` header. The permission had lived in a later role file that
+transcript inspection found was never read. The shared file stays
+byte-identical; the generated header carries the role's exception pointer.
+The pointer belongs in the file the harness loads, even when the full rule
+belongs elsewhere.
 
 ## When I'd revisit
 

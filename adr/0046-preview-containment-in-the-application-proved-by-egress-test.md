@@ -24,7 +24,7 @@ override file looked contained to anyone who checked for the file.
 - **A dedicated writable schema, cloned once.** No shared frozen mirror and no
   continuous refresh, because review work has to survive between sessions and a
   refresh erases it. No production writes.
-- **Containment is application-level, not a network block.** Email goes to a
+- **Outbound effects are contained by application sinks.** Email goes to a
   local mail catcher. SMS goes to an authenticated in-product sink. The
   video-meeting provider is replaced by a credential-free simulator that honors
   the same domain contract, so the code path under review is the real one up to
@@ -42,11 +42,10 @@ override file looked contained to anyone who checked for the file.
 
 ## Consequences
 
-- **A network-level guarantee is deliberately declined.** A default-deny egress
-  rule on the slot would be stronger and would catch a sink I forgot. It was
-  weighed and not built, and that choice is recorded rather than left to look
-  like an oversight. The egress test is the compensating control: it is what
-  notices a new outbound integration nobody rerouted.
+- **A configured sink is not proof of containment.** The egress test checks
+  whether the application actually uses the intended sinks, including when a
+  new outbound integration is added. The resolved configuration and observed
+  effects must agree.
 - **Sinks make the preview more useful, not only safer.** Reviewers can read the
   email and the SMS the system would have sent, which a network block would
   have turned into a silent failure.
@@ -59,7 +58,8 @@ override file looked contained to anyone who checked for the file.
 ## When I'd revisit
 
 If a second team starts using preview slots, or a slot ever holds data more
-sensitive than this one's, the network block gets built underneath the
-application sinks - both, not either. If review work no longer needs to survive
-between sessions, the one-clone rule gives way to the periodic snapshot of
+sensitive than this one's, I would re-evaluate whether application sinks and
+their verification are a sufficient containment boundary. If review work no
+longer needs to survive between sessions, the one-clone rule gives way to the
+periodic snapshot of
 [ADR 0003](0003-periodic-snapshot-over-live-replication.md).

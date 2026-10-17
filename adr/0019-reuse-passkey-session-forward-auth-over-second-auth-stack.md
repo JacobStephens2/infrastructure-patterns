@@ -12,14 +12,14 @@ it installed and configured.
 
 Two facts shaped everything:
 
-1. **A good auth stack already existed.** An internal status dashboard (Flask)
+- **A good auth stack already existed.** An internal status dashboard (Flask)
    had just been hardened to passkey sign-in (WebAuthn, credentials in a password
    manager) behind a magic-link email allowlist, with CSRF protection, rate
    limits, a 24-hour absolute session cap, and a sign-in tripwire. Its session
    cookie is scoped to the parent domain (`Domain=.example.com`). A second login
    for the SQL tool would mean a second credential to phish and a second stack to
-   patch - net-negative for a two-person user base.
-2. **The database is firewalled per source IP.** The orchestration host that
+   patch - an extra burden for a small operator set.
+- **The database is firewalled per source IP.** The orchestration host that
    would run the tool is already allowlisted; the user's residential IP is not,
    and chasing a residential address's churn in a firewall is a non-starter.
 
@@ -37,46 +37,25 @@ on the orchestration host, and gate it with **Caddy `forward_auth` delegated to
 the existing dashboard session** - one auth stack reused across a second app, no
 OIDC/SSO infrastructure added.
 
-```
-browser -> db-admin.example.com   (A record -> orchestration host)
-        -> Caddy :443 (Let's Encrypt TLS)
-             forward_auth -> dashboard.example.com/api/auth-check
-             (forwards the shared session cookie; 401 -> redirect to sign-in)
-        -> web SQL client, 127.0.0.1:8978   (X-User = the verified identity)
-        -> production MySQL, from the host's already-allowlisted IP
-```
+- The browser requests the SQL tool's host, whose DNS points to the proxy.
+- Caddy terminates TLS and sends an auth subrequest to the dashboard,
+   forwarding the shared session cookie. A `401` redirects to sign-in.
+- A successful check forwards the request to the loopback-bound web SQL
+   client, with `X-User` set to the verified identity.
+- The client reaches production MySQL from the host's allowlisted address.
 
 The dashboard exposes one endpoint, `/api/auth-check`, returning `200` plus an
-identity header for a valid signed session cookie and `401` otherwise. The Caddy
-site block does the rest:
+identity header only when a signed session is authorized for the target app,
+and `401` otherwise. The Caddy site block delegates that check and forwards
+the verified identity.
 
-```caddyfile
-db-admin.example.com {
-    reverse_proxy 127.0.0.1:8978
-
-    forward_auth https://dashboard.example.com {
-        uri /api/auth-check
-        # Strip WS-upgrade headers from the auth subrequest only; the proxied
-        # app speaks WebSocket and keeps its own Upgrade headers.
-        header_up -Upgrade
-        header_up -Connection
-        # The verified identity becomes the upstream's login header. copy_headers
-        # has SET semantics, so any client-forged X-User is overwritten on the
-        # only path that reaches the upstream.
-        copy_headers X-Forwarded-Email>X-User
-        @unauth status 401
-        handle_response @unauth {
-            redir https://dashboard.example.com/email?next=https://db-admin.example.com{uri} 302
-        }
-    }
-
-    # Caddy runs request_header AFTER the authenticate stage, so these strip
-    # client-supplied identity headers without clobbering the X-User that
-    # forward_auth just set.
-    request_header -X-Team
-    request_header -X-Role
-}
-```
+The [example Caddyfile](../snippets/0019-forward-auth.Caddyfile) preserves the
+original illustrative configuration separately from this record. Its auth subrequest strips WebSocket
+upgrade headers while the proxied app keeps its own. Copying the verified
+identity uses SET semantics, overwriting a client-forged `X-User` on the path
+that reaches the upstream. Caddy runs `request_header` after authentication,
+so the remaining client-supplied identity headers are stripped without
+clobbering the verified identity.
 
 The web client's `reverseProxy` auth provider trusts `X-User` and auto-provisions
 on first visit. An operator clicks "Database" in the dashboard and lands in a SQL
@@ -111,7 +90,8 @@ write.
 ## Consequences
 
 **Positive.** One phishing-resistant gate now covers a growing family of internal
-tools with ~40 lines of Caddyfile per app and zero new auth code; each new tool
+tools with a Caddyfile block per app and no second credential store or passkey
+implementation; each new tool
 inherits every future hardening of the dashboard's auth for free. Database actions
 are attributable per person, and the whole thing is reversible in one Caddy reload.
 
@@ -122,6 +102,15 @@ is visible to every host on the domain; acceptable while all are first-party, an
 the first thing to revisit if that stops being true. Stock-tool quirks surface
 during setup (auth-provider header config, team/grant visibility, the local-login
 password-hash format) - the price of not building.
+
+## Amendment - 2026-10-16
+
+The shared endpoint now checks permission for the target application, not
+merely whether the session is valid. Current proxy blocks explicitly forward
+the requested host so the endpoint can make that decision. Unknown consumers
+require the administrator role. Reusing authentication does not make every
+signed-in operator authorized for every tool; the linked original example
+illustrates the handoff rather than the complete current permission policy.
 
 ## When I'd revisit
 

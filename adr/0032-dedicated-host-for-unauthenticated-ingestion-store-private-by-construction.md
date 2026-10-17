@@ -1,6 +1,6 @@
 # ADR 0032 - The first workload with unauthenticated browser ingestion gets its own host; the store is private by construction; admin is gated by a named permission; proof is per property, and the abort is written before launch
 
-**Status:** Accepted · host, store, and retention machinery in production (a self-hosted web analytics and session-replay stack scoped to eleven properties; recording is enabled per property behind the launch gates this ADR describes)
+**Status:** Accepted · host, store, and retention machinery in production (four properties live; recording first verified on 2026-09-24; post-launch clocks wait for the designated customer-facing launch)
 
 ## Context
 
@@ -39,8 +39,8 @@ configuration is a database blob with no file, no env var, and no export.
   email list in a Caddyfile on another host (which drifts the moment someone
   leaves). Because the product has no read permission, this gate *is* the
   access control, not the first layer of one. The permission is named for what
-  it gates - the whole analytics store, since record ids travel in page paths
-  - so nobody reasons "it's only analytics, give them a login."
+  it gates: the whole analytics store, since record ids travel in page paths,
+  so nobody reasons "it's only analytics, give them a login."
 - **Cookie scope follows host trust.** Here the console cookie is
   domain-scoped so the gate works across hosts, because every hostname under
   that domain is the same operator's. On a box serving dozens of hostnames
@@ -54,13 +54,15 @@ configuration is a database blob with no file, no env var, and no export.
   worthless a day later), pulled to another host, fourteen days deep. The
   host is Compose plus a volume, so a rebuild is a re-provision, not a
   restore; created by the IaC stack rather than adopted.
-- **Masking proof is per property, by grepping the store.** Type known unique
-  strings into the sensitive fields on a preview slot backed by sandbox data,
-  grep the store for those exact strings, and record the query and its zero
-  rows in the PR. Player screenshots are supporting evidence, never the proof:
-  the player is a lossy view of what was stored, and what was stored is the
-  liability. The verification flag is per host, default off, and prohibited on
-  any non-prod host that reads live production data.
+- **Masking proof is per property, and it is ordered.** First prove that a
+  recording exists for the expected property and identity. Then inspect the
+  store with known probes: an empty result before recording is established
+  proves nothing. The passing result follows the policy in force, so a
+  policy change voids proof taken under the previous one. The proof must
+  distinguish excluded regions from content the policy permits retaining.
+  Player screenshots support the store query; they never replace it. The
+  verification flag is per host, default off, and prohibited on any non-prod
+  host that reads live production data.
 - **The masking policy has a source of truth in the repo**, and the database
   blob is deployed state. A restore that cannot verify the blob's exact values
   leaves collection disabled until the post-restore gate confirms masking is
@@ -89,6 +91,19 @@ configuration is a database blob with no file, no env var, and no export.
 - **Deletion-on-request removes replays, not the person.** Page paths carrying
   record ids stay identifying after the replays are gone, so the claim is
   stated as *replays are deleted; the visit record is not*.
+
+## Amendment - 2026-10-16
+
+Four properties are live, and the first recording was verified on
+2026-09-24. This is not the launch date for the two post-launch gates. The
+source chose the designated customer-facing property's first production
+session as that date, so staff sessions do not start the day-31 retention
+or day-90 usefulness clock. The launch date is not yet set.
+
+The proof standard also changed: recording must be demonstrated before a
+cleanliness query can mean anything, and the passing result must match the
+configuration in force. Reusing an older proof after a policy change would
+certify a recorder that no longer exists.
 
 ## When I'd revisit
 

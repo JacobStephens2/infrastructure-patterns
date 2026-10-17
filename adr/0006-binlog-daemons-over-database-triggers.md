@@ -1,6 +1,6 @@
 # ADR 0006 - Binlog-tailing daemons over database triggers for denormalization
 
-**Status:** Accepted · in production
+**Status:** Accepted · in production (derived-data daemons; checkpoint behavior amended 2026-09-28)
 
 ## Context
 
@@ -26,14 +26,34 @@ else (see [ADR 0004](0004-shell-deploy-over-hosted-ci-runner.md)).
   testable, and ships through the normal pipeline - not hidden DDL that only
   shows up in a schema dump.
 - **The write path stays fast.** Producers commit without waiting on derivation
-  work; the daemons absorb bursts and can be paused and replayed.
-- **Replayable by position.** A daemon can be restarted from a known log
-  position to rebuild derived state after a bug or outage - a handle a trigger
-  simply doesn't give you.
+  work; the daemons absorb bursts. Recovering a missed interval depends on
+  each consumer's checkpoint and replay policy.
+- **Replay requires a checkpoint.** The log exposes positions, but the
+  consumer must persist and resume from one. Tailing alone does not provide
+  recovery, and a process that starts at the current position misses changes
+  written while it was down.
 - **Costs:** the derived data is eventually consistent (it lags by the daemon's
   processing time); the source must retain its binlogs long enough for the
   daemons to consume them; and you own the daemons' lifecycle - supervision,
-  restart-from-position, and idempotency so a replay can't double-apply.
+  checkpointing and replay policy. A consumer can hold a connection open
+  while doing no work, so process presence is not a sufficient health check.
+
+## Amendment - 2026-09-28
+
+The original record claimed replayability for the architecture before the
+consumers supplied it. One notification consumer now checkpoints the end of a
+completed transaction and resumes if that checkpoint is under 7 days old. A
+restart can resend the transaction it died in; a duplicate is preferred to a
+lost alert. An expired or refused position falls back to the current position,
+so this is bounded recovery, not a promise to reconstruct all missed work.
+
+Replay is also a domain decision. Another consumer's startup replay was removed
+in September rather than applying missed actions later. The right policy
+cannot be inferred from the fact that both consume the same log.
+
+[ADR 0063](0063-watch-the-work-not-the-process-with-a-window-longer-than-the-stall.md)
+records the companion monitoring rule: check completed work and checkpoint
+progress, not just whether the daemon is online.
 
 ## When I'd revisit
 

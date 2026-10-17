@@ -1,0 +1,25 @@
+db-admin.example.com {
+    reverse_proxy 127.0.0.1:8978
+
+    forward_auth https://dashboard.example.com {
+        uri /api/auth-check
+        # Strip WS-upgrade headers from the auth subrequest only; the proxied
+        # app speaks WebSocket and keeps its own Upgrade headers.
+        header_up -Upgrade
+        header_up -Connection
+        # The verified identity becomes the upstream's login header. copy_headers
+        # has SET semantics, so any client-forged X-User is overwritten on the
+        # only path that reaches the upstream.
+        copy_headers X-Forwarded-Email>X-User
+        @unauth status 401
+        handle_response @unauth {
+            redir https://dashboard.example.com/email?next=https://db-admin.example.com{uri} 302
+        }
+    }
+
+    # Caddy runs request_header AFTER the authenticate stage, so these strip
+    # client-supplied identity headers without clobbering the X-User that
+    # forward_auth just set.
+    request_header -X-Team
+    request_header -X-Role
+}

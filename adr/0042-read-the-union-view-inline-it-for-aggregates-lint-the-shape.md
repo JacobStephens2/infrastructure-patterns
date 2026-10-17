@@ -60,6 +60,9 @@ join.
 - **The test is a lint rule, not a behavioral test.** Nothing about the results
   was ever wrong, which is exactly why nothing caught this for two months.
   Correctness tests cannot see a cost that depends on volume.
+  [ADR 0061](0061-release-the-session-lock-before-slow-work.md) records another
+  cost that correctness tests and aggregate dashboards missed: per-user
+  serialization behind the session lock.
 - **The carve-out was not new, only unrecorded.** A comment in the original
   migration already said dashboard subqueries sum the two base tables directly
   for speed. The aggregates that caused the incident were added later, read the

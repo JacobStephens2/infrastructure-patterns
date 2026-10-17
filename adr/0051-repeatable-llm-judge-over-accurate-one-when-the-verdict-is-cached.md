@@ -2,6 +2,8 @@
 
 **Status:** Accepted · in production at small scale (a multiplayer word game played by a handful of people; the judge grades every attempt live)
 
+**Source:** [thereish](https://github.com/JacobStephens2/thereish), a public repository. The original records are ADR 0005 and ADR 0006 under its [`docs/adr/`](https://github.com/JacobStephens2/thereish/tree/master/docs/adr), beside the code they govern.
+
 ## Context
 
 A model grades each attempt in a game, live, inside a 2.5-second reveal beat.

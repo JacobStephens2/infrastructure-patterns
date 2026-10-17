@@ -1,6 +1,6 @@
 # ADR 0010 - A pixel-equality gate over diff review for changes to generated markup
 
-**Status:** Accepted · in production
+**Status:** Accepted · used in production (client-site modernization documented June 2026)
 
 ## Context
 
@@ -18,13 +18,17 @@ that looks inert can shift layout. You can't meaningfully *read* this markup -
 so you can't certify a change by reading its diff. The problem sharpens when an
 automated agent is generating the edits at volume.
 
+The [published account](https://stephens.page/blog/letting-an-ai-agent-modernize-a-frozen-legacy-site-safely/)
+documents this use on a client site. That is the evidence boundary here; this
+review did not re-prove the staging mirror or its current operation.
+
 ## Decision
 
 Gate promotion on **rendered-output equality**, not on reading the diff.
 
 - Build the change on a branch served from an isolated **staging mirror** -
-  separate host, `noindex`, its own config; production is never touched until
-  promotion.
+  separate virtual host, `noindex`, its own config; production is never touched
+  until promotion.
 - Render every affected page on staging and on production at fixed viewports and
   compare with an **absolute-error pixel metric**. Target: `AE 0`.
 - A non-zero result is a finding to **explain** - then accept or fix - never a
