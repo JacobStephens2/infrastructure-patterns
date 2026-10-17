@@ -1,6 +1,6 @@
 # ADR 0017 - Self-host the signing instrument and its audit trail over a SaaS signature service
 
-**Status:** Accepted · in production (`sign.stephens.page`, Documenso v2.11.0)
+**Status:** Accepted · in production (the self-hosted Documenso signing service)
 
 ## Context
 
@@ -23,8 +23,9 @@ purpose is non-repudiation, so it gets the same treatment.
 
 ## Decision
 
-**Self-host the signing service so the signed instrument and its audit trail never leave
-infrastructure I control, and gate every consequential action behind a named human.** Use
+**Self-host the authoritative signed instrument and its audit trail on
+infrastructure I control, and gate every consequential action behind a named
+human.** Use
 Documenso (open-source, AGPL) rather than build: the signing cryptography and the audit
 log are exactly the parts a solo author should not reimplement.
 
@@ -34,19 +35,16 @@ log are exactly the parts a solo author should not reimplement.
   official quick-start runs a second Postgres of its own (~2 GB RAM); instead the container
   points at the existing Postgres 16 over the Docker bridge, matching ADR 0002's external-DB
   posture and holding the footprint in the ~1 GB tier (observed 267 MB).
-- **Database access is scoped the way ADR 0009 scopes it.** A dedicated `documenso` role
-  owns one `documenso` database; `pg_hba.conf` admits that role, to that database, only from
-  the Docker bridge subnet (`172.17.0.0/16`), `scram-sha-256`. `listen_addresses` was
-  widened from `localhost` to `localhost,172.17.0.1` - the bridge gateway only, never a
-  public interface. The container reaches it via `host.docker.internal`.
-- **The app never touches the public network directly.** It binds `127.0.0.1:3478`; Apache
-  reverse-proxies it behind Let's Encrypt TLS at `sign.stephens.page`, the fleet's usual
-  pattern. With the host firewall inactive, host networking would have exposed the app port,
-  so the loopback publish is load-bearing.
-- **The signature is cryptographic and the key is local.** A password-protected RSA-2048
-  `.p12` signs each completed PDF; the passphrase lives in a `chmod 600` env file, the key
-  file is `chmod 400` owned by the container UID. Documenso records a per-document event log
-  and a completion certificate, both stored on the box.
+- **Database access is scoped the way ADR 0009 scopes it.** A dedicated role
+  owns one database; Postgres admits that role to that database from the Docker
+  bridge subnet with password authentication. The listener includes the bridge
+  gateway, never a public interface.
+- **The app binds to loopback.** Apache reverse-proxies it behind Let's
+  Encrypt TLS, the fleet's usual pattern. The loopback publish is part of the
+  boundary, rather than an assumption about the host firewall.
+- **The signature is cryptographic and the key is local.** A password-protected
+  RSA-2048 certificate signs each completed PDF. Documenso records a
+  per-document event log and a completion certificate, both stored on the box.
 - **Telemetry off; uptime pulled, not pushed.** `DOCUMENSO_DISABLE_TELEMETRY=true` keeps
   usage data local. The service is a blackbox probe target in the fleet Prometheus (ADR 0007,
   ADR 0011), monitored without an agent inside it.
@@ -60,8 +58,8 @@ log are exactly the parts a solo author should not reimplement.
   tamper-evident, but PDF readers show "signature validity unknown" because the cert chains
   to no public CA. Fine between parties who already know each other, disclosed in the cover
   note, and the explicit thing to fix before signing with strangers.
-- **One container is now mine to keep current.** A pinned image (`v2.11.0`), a signing
-  cert with an expiry (825 days), and Documenso's release cadence are real upkeep - accepted
+- **One container is now mine to keep current.** A pinned image, a signing
+  cert with an expiry, and Documenso's release cadence are real upkeep - accepted
   because the alternative is the binding document on a vendor's terms.
 - **Reusing the host Postgres widened its listener.** `listen_addresses` now includes the
   bridge gateway. The role/database/subnet scoping bounds the new surface to one role

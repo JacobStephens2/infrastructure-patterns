@@ -19,7 +19,7 @@ Format loosely follows [OWASP Threat Modeling](https://owasp.org/www-community/T
 - LLM provider-side security (their infrastructure, their prompt-injection filters, their training data). Trust boundary sits at the network egress from the container.
 - End-user browser security for the public booking portal - separately modeled.
 - Physical security of the host.
-- Tracewake, the unattended coding loop, is *partly* in scope: its execution boundary and credential inventory are modeled here because they are the same seam (an agent with real reach and nobody watching). Its scheduler, journal, and dashboard are not.
+- Tracewake is included as a historical comparison: it ran in production in September 2026 and was superseded by thirdshift in October. Its execution boundary and credential inventory are documented below; its scheduler, journal, and dashboard are not. Tracewake-specific controls do not describe thirdshift, which is outside this model.
 
 ## 2. Assets
 
@@ -29,7 +29,7 @@ Ordered by consequence.
 |---|-------|---------------------------|
 | A1 | **Production reservation DB (write access)** | Existential business risk. A destructive `UPDATE` or `DELETE` at scale takes bookings offline until the last known-good snapshot is restored - hours to days depending on how long ago the write went unnoticed. |
 | A2 | **Signed / generated contracts and invoices** | Legal exposure. A forged or tampered signed PDF sent to a client is a legally-binding document under someone else's authority. |
-| A3 | **Traveler / minor PII** | Regulatory + reputational. School travel programs mean names, DOBs, medical notes, and passport data for minors. |
+| A3 | **Personal information** | Regulatory + reputational. Personal information requires access controls and careful handling throughout the platform. |
 | A4 | **Third-party API credentials** (payment, email, SMS, LLM providers) | Financial. A leaked payment-provider key writes charges. A leaked LLM key runs up bills and can exfiltrate anything the compromised agent could see. |
 | A5 | **Operational continuity** | Any outage that spans the booking-cutoff-to-departure window is unrecoverable - the trip runs or it doesn't. |
 | A6 | **Audit trail** | Everything above is downstream of a legible audit trail. Losing per-action attribution turns a recoverable incident into an unbounded one. |
@@ -52,39 +52,36 @@ The threats are ordered by likelihood × consequence. Each maps to one or more c
 ### T1 - Agent (or attacker via agent) executes destructive writes on the production DB
 **Consequence:** A1, A5. Existential.
 
-- **Control:** Agents write to a periodically-refreshed **snapshot** of the schema, not the primary. Live replication is deliberately not used. ([ADR 0003](../adr/0003-periodic-snapshot-over-live-replication.md))
+- **Control:** Manager Sandbox writes go to a nightly refreshed **snapshot**, not the production schema. Containers have separate files and processes but share that writable sandbox dataset. Live replication is deliberately not used for this writable copy. ([ADR 0003](../adr/0003-periodic-snapshot-over-live-replication.md))
+- **Control:** A separate SELECT-only path reads the production primary under host-pinned grants, account limits, and a server-side query killer. Read-only is not load-free: the time limit is enforced on the server. ([ADR 0057](../adr/0057-a-sandbox-reads-the-primary-not-a-replica-that-can-stall-silently.md))
 - **Control:** DB grants are **scoped by user *and* host**. A credential taken out of a container has no reach off that container's host. ([ADR 0009](../adr/0009-default-deny-host-pinned-db-access.md))
-- **Control:** Every agent has a **dedicated scoped system user**, not a shared service account - every action is attributable. ([ADR 0005](../adr/0005-scoped-system-user-over-service-account.md))
+- **Control:** The coordination-host agent has a dedicated system identity and host-bound database credentials. Identity provides attribution; actual authority needs a separate review. ([ADR 0005](../adr/0005-scoped-system-user-over-service-account.md))
 - **Control:** Container isolation caps filesystem + process reach at the sandbox boundary. ([ADR 0001](../adr/0001-docker-over-bare-metal-for-tenant-isolation.md))
-- **Control:** When nobody is watching, the boundary gets stronger, not weaker. An unattended iteration runs in a **fresh microVM** with deny-all egress, and the only thing that leaves it is the workspace; push and pull-request creation happen on the host with a token the iteration never held. ([ADR 0023](../adr/0023-attendedness-is-a-fourth-trust-axis.md))
-- **Residual risk:** A write that reaches production still relies on the human approval gate. A social-engineered operator who rubber-stamps the gate is the remaining path. For the loop, branch protection requiring one human review is that gate.
+- **Historical Tracewake control:** An unattended iteration ran in a **fresh microVM** with deny-all egress, and the only thing that leaves it is the workspace; push and pull-request creation happen on the host with a token the iteration never held. ([ADR 0023](../adr/0023-attendedness-is-a-fourth-trust-axis.md))
+- **Residual risk:** A write that reaches production still relies on the human approval gate. A social-engineered operator who rubber-stamps the gate is the remaining path. Tracewake also required human review before its proposals merged.
 
 ### T2 - Prompt injection via ingested content causes the agent to take an action outside the operator's intent
 **Consequence:** A1, A2, A3, A4.
 
-- **Control:** The agent never has direct write access to prod. All consequential outputs (contracts, invoices, template edits, external emails) go through a **human approval gate** with per-action logging.
-- **Control:** For legacy generated markup - where a human reviewer cannot eye-diff - the gate is a **pixel-equality assertion**: an edit ships only if a headless render of before/after moves zero pixels. Semantic changes never reach the approval queue in the first place. ([ADR 0010](../adr/0010-pixel-equality-gate-over-diff-review-for-generated-markup.md))
-- **Control:** The **signing instrument** for legally-binding documents runs self-hosted and is gated by a *named human*, not any automation. The agent can prepare a document; only a human can sign it. ([ADR 0017](../adr/0017-self-hosted-signing-instrument-over-saas.md))
-- **Control:** Ingested content is treated as untrusted input. Retrieved web pages and inbound email are stripped of instruction-shaped structures before they enter the context; the harness logs the ingestion path per action.
+- **Control:** Manager Sandbox code changes reach production through pull requests and **engineering review**. Sandbox database experiments remain on the shared writable copy.
+- **Related review control:** For visual-preservation work on generated markup, a **pixel-equality assertion** supplies rendered evidence to the reviewer. It proves visual equivalence only; links, accessibility semantics, and behavior need separate checks. ([ADR 0010](../adr/0010-pixel-equality-gate-over-diff-review-for-generated-markup.md))
+- **Related signing pattern:** The self-hosted **signing instrument** in ADR 0017 gates signing on a *named human*. Preparing a document and authorizing its signature are separate actions. ([ADR 0017](../adr/0017-self-hosted-signing-instrument-over-saas.md))
 - **Residual risk:** A determined injection that convinces the agent to *not* flag something ambiguous for review is not fully defended by pixel-equality alone. Operator training on "if the agent surprises you, stop" is the human control.
 
 ### T3 - Credentials or secrets are leaked from the container to the LLM provider, logs, or an attacker
 **Consequence:** A4, cascading to A1–A3.
 
-- **Control:** Secrets are **runtime-injected**, never persisted to plaintext config. Two backends for two audiences (broker for team, SOPS + age for solo fleet); the invariant is the same. ([ADR 0018](../adr/0018-runtime-injected-secrets-over-plaintext-config.md))
+- **Control:** Covered consumers receive **runtime-injected** secrets from an encrypted source. The team broker and solo fleet's SOPS + age wrapper share that consumer contract; process output requires separate care. ([ADR 0018](../adr/0018-runtime-injected-secrets-over-plaintext-config.md))
 - **Control:** The observability collector seam explicitly **does not carry prompt content** - only agent usage metrics (token counts, latency, cost). ([ADR 0021](../adr/0021-shared-collector-seam-over-direct-backend-wiring.md))
-- **Control:** LLM egress is scoped: each agent has its own provider key, so revocation and cost-attribution work at the per-agent level.
-- **Control:** The agent box's credential set is **enumerated and asserted by script** before every dispatch, in both directions - what it must hold, what families it must not - so "what can this box reach?" has an answer that is checked rather than remembered. ([ADR 0024](../adr/0024-asserted-credential-inventory-is-the-isolation-seam.md))
-- **Control:** The model credential that must sit inside the boundary is a long-lived token injected by environment (no credential file crosses), and the host **scans the proposal diff for the token pattern and refuses to push** on a match. ([ADR 0025](../adr/0025-long-lived-model-token-in-the-boundary-over-per-iteration-renewal.md))
+- **Historical Tracewake control:** The agent box's credential set was **enumerated and asserted by script** before every dispatch, in both directions - what it must hold, what families it must not - so "what can this box reach?" has an answer that is checked rather than remembered. ([ADR 0024](../adr/0024-asserted-credential-inventory-is-the-isolation-seam.md))
+- **Historical Tracewake control:** The model credential inside the boundary was a long-lived token injected by environment (no credential file crosses), and the host **scans the proposal diff for the token pattern and refuses to push** on a match. ([ADR 0025](../adr/0025-long-lived-model-token-in-the-boundary-over-per-iteration-renewal.md))
 - **Control:** Secret manifests are **per consumer**, so a vault rename fails the consumer that read it and no other; the validator covers every manifest the machine reads, and fails closed on any it cannot check. ([ADR 0028](../adr/0028-per-consumer-secret-manifests-and-validate-every-manifest-read.md))
-- **Control:** Audit history of settings changes **never retains secret values** - who and when, never what. ([ADR 0034](../adr/0034-root-allowlist-with-404-over-blocklist-with-403-for-a-legacy-webroot.md), consequences)
-- **Residual risk:** Anything the agent puts *into* a prompt is out of scope for the provider's data handling. Operator training says: prompts don't contain plaintext secrets, and the harness scrubs known secret formats on the way out.
+- **Control:** User-record audit history **never retains secret values** - who and when remain, values are redacted, and restorable snapshots omit the field. ([ADR 0043](../adr/0043-audit-history-never-retains-secret-values-retroactively.md))
+- **Residual risk:** Anything the agent puts *into* a prompt is out of scope for the provider's data handling. Injected credentials can still be exposed by process output; never-print discipline and coverage require separate review.
 
 ### T4 - Compromised dependency or malicious LLM tool call reaches a resource it shouldn't
 **Consequence:** A1–A4.
 
-- **Control:** Every consequential tool call is enumerated in the harness's allow-list; nothing is proxied by default.
-- **Control:** Container's outbound network is restricted; the agent cannot reach the internet arbitrarily.
 - **Control:** OpenSSF Scorecard on the security-sensitive libraries (`webhook-verify`, `webcrypto-envelope`, `muxboard`) surfaces branch-protection, code-review, and signed-release posture as a public badge. Supply-chain surface is minimized further by the "standard-library + zero deps" preference in these libraries.
 - **Control:** An unsigned or self-updating executable (an IaC provider plugin, a vendor's agent runner) is **pinned by exact artifact and proven against that pin**; drift from the pin pauses work rather than running. The dependency never becomes the interface. ([ADR 0027](../adr/0027-pin-and-prove-unsigned-dependencies-keyed-to-the-pin.md))
 - **Control:** Where the sandbox is layered (systemd hardening, seccomp, AppArmor, Bubblewrap), the confinement is **proved from the live unit**, not from an attended shell that the service could never match. ([ADR 0035](../adr/0035-sandbox-namespaces-under-systemd-hardening-prove-from-the-live-unit.md))
@@ -94,9 +91,8 @@ The threats are ordered by likelihood × consequence. Each maps to one or more c
 ### T5 - Public admin console is compromised (credential theft, session hijack, phishing)
 **Consequence:** A5, cascading everywhere.
 
-- **Control:** SSH left the public internet entirely. Operator shells reach the fleet via a **private WireGuard mesh**. ([ADR 0020](../adr/0020-private-mesh-for-shells-mfa-gated-public-endpoints-for-browsers.md))
-- **Control:** The browser admin consoles non-technical operators reach by URL stayed public but are **MFA-gated per audience**. A passkey session gates a second app via forward_auth rather than standing up a second auth stack. ([ADR 0019](../adr/0019-reuse-passkey-session-forward-auth-over-second-auth-stack.md))
-- **Control:** Passkeys everywhere; no SMS second factor for anyone reachable via the ops surface.
+- **Control:** Enrolled hosts restrict operator SSH to a **private WireGuard mesh** and the automation source. The fleet-wide reachability check is dated 2026-06-12; later hosts need their own verification. ([ADR 0020](../adr/0020-private-mesh-for-shells-mfa-gated-public-endpoints-for-browsers.md))
+- **Control:** A passkey-protected operations session gates a second browser app via forward_auth rather than standing up a second auth stack. ([ADR 0019](../adr/0019-reuse-passkey-session-forward-auth-over-second-auth-stack.md))
 - **Residual risk:** A compromised endpoint device (operator's laptop, malware in the browser) still authenticates as the legitimate operator. MDM + browser-side compensating controls sit outside this repo.
 
 ### T6 - Backup/restore path fails when needed
@@ -104,15 +100,15 @@ The threats are ordered by likelihood × consequence. Each maps to one or more c
 
 - **Control:** Terraform state lives on a **different provider** than the compute it provisions, so a provider-level outage cannot destroy both simultaneously. ([ADR 0015](../adr/0015-state-off-the-provider-it-provisions.md))
 - **Control:** External managed DB over containerized (durable, backup-friendly). ([ADR 0002](../adr/0002-external-managed-db-over-containerized.md))
-- **Control:** The snapshot pipeline is exercised continuously rather than on a drill calendar: every Manager Sandbox refresh, every few hours, is a load from the production mirror into a working database ([ADR 0003](../adr/0003-periodic-snapshot-over-live-replication.md)). That proves the mirror and the load path. It does not prove a full restore of the primary, which is a separate rehearsal.
+- **Control:** The snapshot pipeline is exercised continuously rather than on a drill calendar: every nightly Manager Sandbox refresh is a snapshot load into a working database ([ADR 0003](../adr/0003-periodic-snapshot-over-live-replication.md)). That proves the snapshot source and the load path. It does not prove a full restore of the primary, which is a separate rehearsal.
 - **Residual risk:** A restore that hasn't been tested since a schema migration will surprise you. Restore rehearsals must run *after* every schema-breaking release.
 
 ### T7 - Loss of per-action attribution (audit trail gap)
 **Consequence:** A6, cascading everywhere.
 
-- **Control:** Scoped system user per agent means shell audit logs already attribute per named identity. ([ADR 0005](../adr/0005-scoped-system-user-over-service-account.md))
+- **Control:** The coordination-host agent's dedicated system identity attributes its shell actions separately from human sessions. ([ADR 0005](../adr/0005-scoped-system-user-over-service-account.md))
 - **Control:** Signing instrument keeps its own signed audit log, gated on a named human per action. ([ADR 0017](../adr/0017-self-hosted-signing-instrument-over-saas.md))
-- **Control:** Observability collector seam preserves structured events for every consequential action.
+- **Control:** Infrastructure and application logs are shipped through the collector with source identity. Application-level action auditing is checked separately; telemetry presence does not establish complete action coverage.
 - **Residual risk:** A gap between the harness's per-action log and the DB's row-level history is where questions land during incident review. Cross-referencing must be scripted, not memory-based.
 
 ## 5. Residual risks (what's still yours to own)
@@ -123,8 +119,8 @@ The controls above reduce these but do not eliminate them:
 - **A prompt injection that persuades the agent to stay silent.** Defense-in-depth via multiple review paths (log + gate + observability) rather than any single filter.
 - **A supply-chain compromise upstream of what OpenSSF Scorecard covers** - e.g. a compromised container base image whose vendor was itself compromised. Base-image pinning + SBOM scanning are the compensating controls; both live outside this repo's scope.
 - **A schema migration whose restore path is untested.** Rehearse restores after schema breaks.
-- **A signing key on an unattended box.** Loop commits are signed with a dedicated key registered to the operator, so a compromised box produces *verified* commits in the operator's name. The key's distinct title and mandatory human review before merge are the compensating controls; the badge is documented as meaning "caused," not "typed." ([ADR 0024](../adr/0024-asserted-credential-inventory-is-the-isolation-seam.md))
-- **A sandbox tool's own credential proxy.** Under the earlier session-file design, the microVM tool's host proxy took custody of the guest's refreshed OAuth tokens into a host-global store - a second copy of the credential nobody asked for. The long-lived-token design removed the refresh; the lesson is that a sandbox's proxy is part of the credential's blast radius. ([ADR 0025](../adr/0025-long-lived-model-token-in-the-boundary-over-per-iteration-renewal.md))
+- **Tracewake's historical signing-key trade-off.** Loop commits were signed with a dedicated key registered to the operator, so a compromised box produces *verified* commits in the operator's name. The key's distinct title and mandatory human review before merge are the compensating controls; the badge is documented as meaning "caused," not "typed." ([ADR 0024](../adr/0024-asserted-credential-inventory-is-the-isolation-seam.md))
+- **Tracewake's earlier credential-proxy design.** Under the earlier session-file design, the microVM tool's host proxy took custody of the guest's refreshed OAuth tokens into a host-global store - a second copy of the credential nobody asked for. The long-lived-token design removed the refresh; the lesson is that a sandbox's proxy is part of the credential's blast radius. ([ADR 0025](../adr/0025-long-lived-model-token-in-the-boundary-over-per-iteration-renewal.md))
 - **"Attended" can be lost by accident.** A preview instance left running is an unattended one. Lease, banner, and a runtime cap are what keep the distinction honest. ([ADR 0023](../adr/0023-attendedness-is-a-fourth-trust-axis.md))
 
 ## 6. When I'd revisit

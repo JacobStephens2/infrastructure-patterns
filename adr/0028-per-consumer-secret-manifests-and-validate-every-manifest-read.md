@@ -77,10 +77,18 @@ telling the operator everything is fine.
   the rebuild guide named that file once, as a step verifying it resolves.
 - **The offline validator covers the same set** for the faults it can see
   without a vault. It is a weaker check, not a narrower one.
-- **Still uncovered:** references outside any manifest - a script calling the
+- **Outside the launcher's coverage:** references outside any manifest - a script calling the
   vault CLI directly. The same host had a renamed item break four such scripts
   for thirteen days. That is a repository-scanning problem, not a launcher one,
-  and it is named here so it does not pass for solved.
+  and it is named here so the launcher does not pass for solving it.
+
+## Amendment - 2026-10-16
+
+The launcher still cannot discover references outside its manifests. The
+fleet now covers tracked script references with a separate daily repository
+scanner. It checks item existence and field labels, while excluding prose,
+fixtures, placeholders, and explicit ignores. The limitation above is the
+launcher's boundary, not a claim that the fleet has no companion check.
 
 ## When I'd revisit
 

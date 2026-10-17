@@ -13,9 +13,9 @@ it are meant to be disposable and frequently rebuilt.
 
 ## Decision
 
-Keep the database on a dedicated, separately-managed host (a managed instance
-with its own backup, monitoring, and upgrade lifecycle) and point the
-containers at it over the network with per-tenant users, locked down per
+Keep the database on a dedicated host, managed separately with its own backup,
+monitoring, and upgrade lifecycle. Point the containers at it over the network
+with per-tenant users, locked down per
 [ADR 0009](0009-default-deny-host-pinned-db-access.md). The containers stay
 stateless and cattle; the data tier is a pet, on purpose.
 

@@ -1,6 +1,6 @@
 # ADR 0007 - Pull-based health probing over push agents for a small fleet
 
-**Status:** Accepted · in production
+**Status:** Accepted · in production (the liveness prober remains alongside the metrics stack from ADR 0011)
 
 ## Context
 
@@ -36,5 +36,10 @@ single-node (see [ADR 0008](0008-embedded-sqlite-over-networked-db-for-tooling.m
 Rich per-process metrics, high-resolution history, or real alerting SLAs tip the
 balance toward push-based agents and a proper time-series database. Needing to
 see health from many network vantage points tips it toward distributed probing.
-At this fleet size and with one trusted operator host, neither yet pays for
-itself.
+
+## Amendment - 2026-10-16
+
+The history and alerting threshold was reached.
+[ADR 0011](0011-instrumented-metrics-stack-over-bespoke-prober.md) added the
+metrics stack alongside the prober, which still owns at-a-glance liveness
+and operator actions. The original decision holds for that narrower job.

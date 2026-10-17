@@ -20,25 +20,25 @@ fit both - but one *invariant* does.
 
 ## Decision
 
-**Secrets are injected into the process environment at runtime from an
-encrypted store, never read from plaintext at rest - and the store is chosen
-per operational context.** The consumer contract is environment variables; no
-consumer knows which backend produced them.
+**Covered consumers receive secrets at runtime from an encrypted store, and
+the store is chosen per operational context.** The consumer contract is
+environment variables; no consumer knows which backend produced them.
 
 - **Team fleet: a managed broker (1Password).** Credentials live in the vault;
   `op inject` resolves a checked-in template of `op://` references (references in
   git, values never) into the process's environment for its lifetime,
-  re-injecting at restart. One template feeds both consumer shapes on the box: a
+  re-injecting at restart. The original template fed both consumer shapes: a
   systemd service renders it in `ExecStartPre` to a tmpfs runtime file
   (re-resolved every unit start, wiped on reboot), and the interactive agent
   launcher exports it env-only at session launch. The template doubles as the
-  reviewable inventory of everything the machine identity can receive. The broker
+  reviewable inventory of what the consumer receives.
+  [ADR 0028](0028-per-consumer-secret-manifests-and-validate-every-manifest-read.md)
+  records the later split into per-consumer manifests. The broker
   earns its subscription where a team exists: sharing without chat-pasting,
   central revocation on offboarding, rotation in one place (each consumer picks
-  it up at its next launch), and an access log. The agent is injected the same
-  vault way and the path writes nothing to its sandbox, but injected values are
-  inherited by every child process and transcripts persist to disk, so the
-  never-print discipline is part of the control, not a property of the mechanism.
+  it up at its next launch), and an access log. Child processes inherit
+  injected values, so never-print discipline is part of the control, not a
+  property of the mechanism.
 - **Solo fleet: file-based encryption (SOPS + age).** Each secret file is
   encrypted to an age key (`*.env.sops`); a ~15-line `secret-env` wrapper
   decrypts one file into one command's environment and `exec`s it, and systemd
@@ -61,11 +61,10 @@ consumer knows which backend produced them.
 
 ## Consequences
 
-- **A leaked disk, backup, or transcript exposes ciphertext, not credentials.**
-  The accident the plaintext default invites - the stray `cat`, the file in the
-  wrong tarball - now discloses nothing. The discipline is only as good as its
-  coverage: an adopted invariant is worth auditing for plaintext that predates it
-  and never got migrated.
+- **The encrypted source protects stored copies, not process output.** A
+  copied encrypted file is ciphertext. A transcript or log that prints an
+  injected value still holds the credential. Coverage and never-print
+  discipline must be checked separately from encryption at rest.
 - **Two backends is more honest than one, and costs a second mental model.** The
   broker's audit log and revocation have no SOPS equivalent; SOPS's offline,
   zero-vendor recovery has no broker equivalent. One tool for both fleets would
@@ -113,17 +112,14 @@ upstream and downstream of the automation, not only how it behaves.*
 - **(b) Human-displacement assessment.** This automates away the riskiest
   clerical habit in small-team operations: hand-copying credentials into files
   and chat. No one's work is displaced; the person who used to paste keeps every
-  responsibility except the unsafe step. The de-skilling risk runs the other way
-  - operators who never see a secret can forget how injection works - which is
+  responsibility except the unsafe step. The de-skilling risk runs the other
+  way - operators who never see a secret can forget how injection works - which is
   why the wrapper is short enough to read and the runbooks document the path.
 
 - **(c) Not delegated.** The secret system may *inject*; it may never *mint,
   widen, or share*. Creating a credential, raising its scope, or granting a
-  person or agent vault access is a human action under review. And a caution this
-  pattern forces into the open: when an agent's machine identity is a broker token
-  scoped to a vault, the agent can list and read everything in that vault -
-  including the bootstrap token in its own environment - not only the values
-  injected for a task. So the boundary that bounds an agent compromise is the
-  vault's scope: one dedicated vault per machine identity, holding only what that
-  identity may ever receive. Per-item injection is not a containment boundary;
-  scope the vault as if the agent will read all of it, because it can.
+  person or agent vault access is a human action under review. The vault's
+  scope is the authorization boundary; per-item injection describes what a
+  consumer receives at launch, not what a broader machine identity may access.
+  Scope the identity to everything it is permitted to receive, rather than
+  treating a short manifest as proof of confinement.

@@ -1,6 +1,6 @@
 # ADR 0038 - The guardrail reads every tree that runs unattended, and unknown is never green
 
-**Status:** Accepted · in production (read and journaled at the start of every Tracewake cycle)
+**Status:** Accepted · ran in production in Tracewake in September 2026; superseded in October 2026 by thirdshift
 
 **Source:** [Tracewake](https://github.com/JacobStephens2/tracewake), a public repository. The original record is ADR 0026 under its [`docs/adr/`](https://github.com/JacobStephens2/tracewake/tree/main/docs/adr), beside the code it governs. This is the generalized write-up.
 
@@ -55,6 +55,19 @@ reported silence when nothing was wrong.
   and is not declared is invisible to the guardrail by construction. The
   guardrail can prove the trees it was told about; it cannot discover ones it
   was not.
+
+## Amendment - 2026-10-16
+
+The successor deliberately chose a different idle-log policy.
+[thirdshift ADR 0011](https://github.com/JacobStephens2/thirdshift/blob/main/docs/adr/0011-thirdshift-keeps-a-per-repository-activity-log.md)
+writes a skip line only when its reason changes; its source puts the rejected
+line-per-skip policy at about 1,440 lines a day per kind per repository. An
+idle Activity log therefore cannot prove the scheduler is still firing.
+
+Tracewake paid for one idle reading per cycle to keep its status chip fresh.
+The successor chose less noise across more scheduled passes. Pass frequency
+and target count determine whether journaling every idle pass is still a
+useful liveness signal.
 
 ## When I'd revisit
 

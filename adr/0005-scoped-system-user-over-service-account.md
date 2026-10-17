@@ -1,6 +1,6 @@
 # ADR 0005 - A scoped system user over a shared service account for an autonomous agent
 
-**Status:** Accepted · in production
+**Status:** Accepted · in production (dedicated agent identity; scope of the claim corrected 2026-10-16)
 
 ## Context
 
@@ -13,26 +13,32 @@ given action - the agent, or the human who launched it?).
 
 ## Decision
 
-Run the agent as its own dedicated, least-privilege **system user**, distinct
-from any human:
+Run the agent as its own dedicated **system user**, distinct from any human:
 
-- Database grants scoped to exactly what the agent needs, and bound so they
-  only work from the agent's host.
-- Secrets injected into the agent's environment at launch from a vault - the
-  agent uses them but never has them sitting on disk in its workspace.
-- A single, narrowly-scoped privilege-escalation path (one launcher), rather
-  than broad sudo.
+- Separate database credentials, with grants bound to the source host.
+  Review the privileges independently from the identity that holds them.
+- Runtime secrets supplied by the launcher from a vault, rather than borrowed
+  from whichever human started the session.
+- A dedicated launch path, so account selection and secret injection have one
+  place to maintain.
 
 ## Consequences
 
 - **Clean attribution.** Audit logs read "the agent did X," never "engineer Y
   did X *via* the agent." Any human can trigger it without their own
   credentials becoming the agent's.
-- **Least privilege by construction.** The blast radius is whatever the scoped
-  user can reach - known and small - not whatever the launching human happens
-  to have.
+- **Identity and authority are separate checks.** A dedicated account makes
+  attribution clearer; it does not prove that the grants or host privileges
+  are minimal. Those need their own review.
 - **Costs:** more up-front host setup (the user, the grants, the launcher, the
   secret-injection path) than reusing an existing account.
+
+## Amendment - 2026-10-16
+
+The original record treated a dedicated identity as proof of least privilege.
+That claim was too broad. The decision retained here is separate identity,
+host-bound database credentials, and a maintained launch path. Each target's
+actual authority must be reviewed separately.
 
 ## When I'd revisit
 

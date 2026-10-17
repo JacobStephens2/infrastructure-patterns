@@ -1,6 +1,6 @@
 # ADR 0047 - On a generated status site, scripts hide rows and derive no figures
 
-**Status:** Accepted · in production (an internal requirements-tracking site, regenerated from the repository, with a nightly run as its heartbeat)
+**Status:** Accepted · in production (a five-person project team's generated requirements site; the script allowlist was amended on 2026-08-31)
 
 ## Context
 
@@ -37,7 +37,7 @@ generator and is literal text in the HTML before any script runs.
 - **The size of the filtered view is stated separately, as "showing N of M".**
   It is a count of visible rows, not a figure of the model, which is why it may
   move under a filter and the tiles may not.
-- **The freshness banner is the one thing a script writes**, because its inputs
+- **The freshness banner was originally the one thing a script wrote**, because its inputs
   are the reader's clock and the last run's record, neither of which existed at
   generation time. It states no count and no verdict.
 - **The rule is enforced as a property of the output, not by inspecting
@@ -62,9 +62,29 @@ generator and is literal text in the HTML before any script runs.
   into a script passes while any other page still states the same value. And it
   can only look for a value, which makes it weak on single-digit fixtures and
   sharp on real data: all 1,213 figures the published model held were literal
-  text across the five pages when this was adopted.
+  text across the five pages on 2026-08-27.
 - **The "showing N of M" line is outside the check by construction.** Only M is
   a figure of the model.
+
+## Amendment - 2026-10-16
+
+The source widened the script allowlist on 2026-08-31. Scripts may also
+remember per-reader display state in `localStorage` and restate a timestamp
+in the reader's timezone. The localized timestamp retains its UTC original
+and prints the zone. Nothing remembered may change a count, level, verdict,
+or percentage. The freshness banner is no longer the only script-written
+text; the rule against deriving model figures stands.
+
+The site had already consolidated to one reading page and one explanation
+page on 2026-08-29, with old paths redirected. That narrows the cross-page
+blind spot described above. The 1,213-figure measurement is the dated result,
+not a current page or figure count. The output check never walked timestamps
+and strips scripts, so it would not have caught the localization change; the
+source made that change an explicit decision.
+
+[ADR 0065](0065-assert-enforcement-at-the-script-the-workflow-and-the-ruleset.md)
+checks another enforcement claim from the same planning repository at the
+script, workflow, and ruleset that must all make it true.
 
 ## When I'd revisit
 

@@ -1,6 +1,6 @@
 # ADR 0023 - Attendedness is a fourth trust axis: keep a per-iteration microVM boundary for unattended agents, even at single-operator scale
 
-**Status:** Accepted · in production (an unattended coding loop dispatching every thirty minutes; two vendors' CLI agents run under the same boundary)
+**Status:** Accepted · ran in production in Tracewake in September 2026; superseded in October 2026 by thirdshift
 
 **Source:** [Tracewake](https://github.com/JacobStephens2/tracewake), a public repository. The original record is ADR 0003 under its [`docs/adr/`](https://github.com/JacobStephens2/tracewake/tree/main/docs/adr), beside the code it governs. This is the generalized write-up.
 
@@ -86,10 +86,23 @@ Execution Boundary - and nothing else:
   container-registry login to pull its guest image, which is the one credential
   the boundary itself costs. It is read-only and revokes independently
   (ADR 0024).
-- **The orchestration host may never run an unattended loop on itself.** Today
-  that holds because the loop's work source is a different repository's tracker.
-  Pointing the loop at the orchestration repo's own queue would silently
-  violate it, which is why it is written down rather than assumed.
+- **Tracewake kept unattended execution off its credentialed scheduling
+  host.** Its work source was a different repository's tracker. That was a
+  constraint of this design, not a claim about every later agent system.
+
+## Amendment - 2026-10-16
+
+Tracewake was superseded by [thirdshift](https://github.com/JacobStephens2/thirdshift)
+in October 2026, and its repository is archived. This record describes
+Tracewake's boundary. Three vendor adapters shipped under the shared harness;
+the earlier claim of two adapters understated the code, while real-task
+evidence covers two of them.
+
+The successor does not keep the per-iteration boundary, as its
+[ADR 0013](https://github.com/JacobStephens2/thirdshift/blob/main/docs/adr/0013-every-harness-runs-unattended-and-fully-trusted.md)
+records. Its merge decision is separate too
+([ADR 0054](0054-merge-the-exact-head-whose-ci-was-watched-over-platform-auto-merge.md)).
+The reasoning above remains the decision made for Tracewake.
 
 ## When I'd revisit
 

@@ -22,6 +22,10 @@ The ADRs in [`../adr/`](../adr/) explain *why* each pattern exists. This checkli
   Ideally: no. All writes go via a snapshot or a human-gated path.
   → [ADR 0003 periodic snapshot](../adr/0003-periodic-snapshot-over-live-replication.md)
 
+- [ ] **Can a read-only query stall production writes or a migration?**
+  Ideally: the canonical read source is chosen explicitly, with server-enforced query limits and account limits. A client timeout alone is not the boundary.
+  → [ADR 0057 reads on the primary](../adr/0057-a-sandbox-reads-the-primary-not-a-replica-that-can-stall-silently.md)
+
 - [ ] **What is the smallest possible action that can take the business offline for a day?**
   If you can't name it in one sentence, you don't yet know your blast radius.
 
@@ -71,7 +75,7 @@ The ADRs in [`../adr/`](../adr/) explain *why* each pattern exists. This checkli
 
 - [ ] **Does any audit trail or change history retain secret values?**
   Ideally: no - who and when are kept, old and new values are redacted, restorable snapshots omit the field.
-  → [ADR 0034, consequences](../adr/0034-root-allowlist-with-404-over-blocklist-with-403-for-a-legacy-webroot.md)
+  → [ADR 0043 audit history](../adr/0043-audit-history-never-retains-secret-values-retroactively.md)
 
 ## 4. Auth & access
 
@@ -109,10 +113,10 @@ The ADRs in [`../adr/`](../adr/) explain *why* each pattern exists. This checkli
   → [ADR 0021 shared collector seam](../adr/0021-shared-collector-seam-over-direct-backend-wiring.md)
 
 - [ ] **Are the private parts of the observability stack (Prometheus, Loki write path, admin panes without auth) reachable from the internet?**
-  Ideally: no. Bound to loopback; only a read-only pane (Grafana) exposed, and even that behind the same auth as the rest of the ops surface.
+  Ideally: no. Keep unauthenticated backends on loopback and pin remote exporters to the monitoring host. The live Grafana requires a login; publish a static image for public read-only viewing.
 
 - [ ] **Do agent-usage metrics flow, and does prompt *content* deliberately not?**
-  Ideally: yes to the first, yes to the second - the collector's scrub rules make it explicit.
+  Ideally: yes to the first, yes to the second. Managed agent settings emit usage metrics without prompt content; verify that choice at the source rather than assume the collector removes it.
 
 - [ ] **Is there a per-action audit trail that survives a container restart?**
   Ideally: yes; logs are shipped off the container before the container can die.
@@ -137,7 +141,7 @@ The ADRs in [`../adr/`](../adr/) explain *why* each pattern exists. This checkli
   → [ADR 0014 import live DNS](../adr/0014-import-live-dns-over-recreating-it.md)
 
 - [ ] **Do services run from a tree anyone edits in?**
-  Ideally: no. The serving checkout is pinned fast-forward-only, refuses and alerts on a dirty tree, and editing happens in worktrees with a stale-path pre-commit hook.
+  Ideally: the serving checkout is pinned fast-forward-only and refuses and alerts on a dirty tree, with a stale-path pre-commit hook covering every worktree. If interactive sessions land in the serving checkout, move unfinished changes to a worktree; the pin detects dirt rather than preventing edits.
   → [ADR 0029 pinned serving checkout](../adr/0029-pin-the-serving-checkout-fast-forward-only-edit-in-worktrees.md)
 
 - [ ] **Can a merge change what root has pinned on the host (unit files, sandbox profiles)?**
@@ -169,11 +173,12 @@ The ADRs in [`../adr/`](../adr/) explain *why* each pattern exists. This checkli
   Ideally: yes, and the gate isn't rubber-stampable at scale - the reviewer has evidence-in-hand (a pixel diff, a summarized DB delta, a preview render) rather than a wall of unstructured text.
   → [ADR 0010 pixel-equality gate](../adr/0010-pixel-equality-gate-over-diff-review-for-generated-markup.md), [ADR 0017 self-hosted signing](../adr/0017-self-hosted-signing-instrument-over-saas.md)
 
-- [ ] **Is the agent's tool surface enumerated in an allow-list?**
-  Ideally: yes; nothing is proxied by default.
+- [ ] **What enforces each boundary on the agent's actions, and how was it proved?**
+  Ideally: name the enforcing layer and run a negative test from the live service context. A tool list or a configuration file alone is not evidence of containment.
+  → [ADR 0035 proof from the live unit](../adr/0035-sandbox-namespaces-under-systemd-hardening-prove-from-the-live-unit.md), [ADR 0046 containment proof](../adr/0046-preview-containment-in-the-application-proved-by-egress-test.md)
 
 - [ ] **Is retrieved / ingested content treated as untrusted?**
-  Ideally: yes - inbound email, retrieved web pages, and user-uploaded documents pass through a scrubber for instruction-shaped patterns before entering the context.
+  Ideally: the trust boundary remains explicit when email, web pages, or uploaded documents enter context. Test an injected instruction against the action boundary; a text filter alone cannot establish it.
 
 - [ ] **Is the LLM provider swappable at config time?**
   Ideally: yes; a price or capability shift is a config change, not a rewrite. Multi-provider is a resilience property, not a feature.

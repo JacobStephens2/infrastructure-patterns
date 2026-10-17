@@ -1,9 +1,9 @@
 # Case study - a group-travel platform, modernized in production and then opened to agents
 
 **Status:** Sanitized. Names, hostnames, tenant identifiers, credentials, and
-vendor account details are removed or generalized. Every figure below is one I
-have published elsewhere under my own name; nothing here is estimated for
-effect.
+vendor account details are removed or generalized. Business-outcome figures
+are already published under my own name; engineering measurements are traced
+to the source records. Nothing here is estimated for effect.
 
 A companion to the ADRs in [`../adr/`](../adr/). The ADRs answer *what did you
 decide, and why*. This answers *what did the system look like before, what does
@@ -11,14 +11,19 @@ it look like now, and what changed that mattered*.
 
 ---
 
-## Two environments, two purposes
+## The environments and their evidence boundaries
 
 - A **Manager Sandbox** is a role-specific instance of the platform running in
-  a Docker container. Managers use these isolated copies to explore data and
-  prototype changes before human-reviewed promotion.
-- **Tracewake** is a single-operator unattended coding loop that runs each agent
-  iteration in a fresh microVM and opens a draft pull request with nobody
-  watching.
+  a Docker container. Managers use separate application containers over shared sandbox data to
+  explore and prototype changes before human-reviewed promotion.
+- **Tracewake** ran unattended coding iterations in fresh microVMs and opened
+  draft pull requests. It ran in production in September 2026 and was
+  superseded by thirdshift in October; its records retain that history.
+- **thirdshift** is the current open-source issue-to-pull-request factory. Its
+  records distinguish review evidence, CI decisions, and repository merge
+  policy from the earlier loop
+  ([0052](../adr/0052-a-fresh-session-second-look-over-a-second-model-family.md),
+  [0054](../adr/0054-merge-the-exact-head-whose-ci-was-watched-over-platform-auto-merge.md)).
 
 ## The system I inherited
 
@@ -60,14 +65,19 @@ everything after it possible.
 
 ### 2. A deploy path that refuses bad deploys
 
-A guarded server-side deploy for the monolith
-([0004](../adr/0004-shell-deploy-over-hosted-ci-runner.md)), a shared serving
-checkout pinned fast-forward-only so the newest commit can never carry the
-oldest content
-([0029](../adr/0029-pin-the-serving-checkout-fast-forward-only-edit-in-worktrees.md)),
-immutable per-commit releases with atomic promotion for the internet-facing
-console ([0030](../adr/0030-immutable-releases-atomic-promotion-append-only-journal.md)),
-and a webroot allowlist that returns 404 for anything nobody anticipated
+A guarded server-side script executes the monolith's deploys
+([0004](../adr/0004-shell-deploy-over-hosted-ci-runner.md)). Since 2026-10-15,
+GitHub Actions automatically requests a deploy on a default-branch push; the
+host rechecks authority, the commit, CI, and live state before acting
+([0058](../adr/0058-the-hosted-runner-asks-and-the-host-decides.md)).
+
+The fleet's shared serving checkout is pinned fast-forward-only, refuses to
+advance while dirty, and uses a stale-path guard on commits
+([0029](../adr/0029-pin-the-serving-checkout-fast-forward-only-edit-in-worktrees.md)).
+The operations console and its deploy worker run one immutable release and
+refuse production work when their revisions disagree
+([0059](../adr/0059-two-processes-one-release-refuse-when-they-disagree.md)).
+The application's webroot allowlist returns 404 for unexpected entrypoints
 ([0034](../adr/0034-root-allowlist-with-404-over-blocklist-with-403-for-a-legacy-webroot.md)).
 
 ### 3. Secrets out of files, and the perimeter sized to who uses it
@@ -77,13 +87,15 @@ Secrets are encrypted at rest and injected at runtime
 one manifest per consumer after a shared manifest took four units down for six
 hours ([0028](../adr/0028-per-consumer-secret-manifests-and-validate-every-manifest-read.md)).
 Operator shells moved behind a private mesh while the browser consoles
-non-technical staff reach by URL stayed public behind MFA
+non-technical staff reach by URL stayed public behind login. The operations
+session uses passkeys and can gate a second app through forward_auth
+([0019](../adr/0019-reuse-passkey-session-forward-auth-over-second-auth-stack.md))
 ([0020](../adr/0020-private-mesh-for-shells-mfa-gated-public-endpoints-for-browsers.md)).
 
 ### 4. Measurement before optimization
 
-A standard metrics stack replaced the bespoke prober for anything that needs
-history ([0011](../adr/0011-instrumented-metrics-stack-over-bespoke-prober.md)),
+A standard metrics stack added history and alerting alongside the bespoke
+prober ([0011](../adr/0011-instrumented-metrics-stack-over-bespoke-prober.md)),
 then traces and logs behind one collector seam
 ([0021](../adr/0021-shared-collector-seam-over-direct-backend-wiring.md),
 [0022](../adr/0022-colocated-loki-behind-collector-seam-over-dedicated-log-stack.md)).
@@ -91,26 +103,33 @@ The payoff was that performance work stopped being anecdotal.
 
 ### 5. Manager Sandboxes
 
-Each manager gets a role-specific instance in a Docker container
-([0001](../adr/0001-docker-over-bare-metal-for-tenant-isolation.md)), over a
-database refreshed every few hours from a production mirror and never the
-primary ([0003](../adr/0003-periodic-snapshot-over-live-replication.md)), under
-a scoped identity ([0005](../adr/0005-scoped-system-user-over-service-account.md))
-with default-deny, host-pinned database grants
-([0009](../adr/0009-default-deny-host-pinned-db-access.md)). Agent command
-execution is allowlist-constrained, AI work lands on a per-role branch, and
-promotion is a manual step by a human.
+Each manager gets a role-specific application container
+([0001](../adr/0001-docker-over-bare-metal-for-tenant-isolation.md)), with
+separate files and processes over one shared writable sandbox database. The
+database is refreshed nightly, with per-manager credentials
+([0003](../adr/0003-periodic-snapshot-over-live-replication.md)). This makes
+refreshes cheaper and lets one manager's database experiments affect the
+others. It is application isolation, not per-manager data isolation.
 
-### 6. Unattended agents, with one boundary re-earned
+A scoped identity attributes work
+([0005](../adr/0005-scoped-system-user-over-service-account.md)); host-pinned
+grants constrain database access
+([0009](../adr/0009-default-deny-host-pinned-db-access.md)). A separate
+SELECT-only path reads production on the primary under account limits and a
+server-side query killer
+([0057](../adr/0057-a-sandbox-reads-the-primary-not-a-replica-that-can-stall-silently.md)).
+Code promotion goes through pull requests and engineering review.
 
-When nobody is watching, "I notice and fix" stops being true, so the execution
-boundary comes back as a per-iteration microVM and almost nothing else does
+### 6. What the earlier unattended loop taught
+
+Tracewake treated the loss of "I notice and fix" as the reason to reintroduce
+a per-iteration microVM boundary
 ([0023](../adr/0023-attendedness-is-a-fourth-trust-axis.md)). The loop's reach
-is a short, asserted credential inventory
+was a short, asserted credential inventory
 ([0024](../adr/0024-asserted-credential-inventory-is-the-isolation-seam.md)),
-its throughput is bounded by my review queue rather than a spend cap
+its throughput was bounded by my review queue rather than a spend cap
 ([0036](../adr/0036-review-capacity-over-a-daily-spend-cap-for-unattended-dispatch.md)),
-and a task with no test suite still gets mechanical backpressure
+and a task with no test suite still got mechanical backpressure
 ([0037](../adr/0037-completeness-check-derives-its-own-denominator.md)).
 
 ## Measured outcomes
@@ -128,15 +147,18 @@ and a task with no test suite still gets mechanical backpressure
 - **One dashboard aggregate from 1,441 seconds to 0.196**, after an incident
   caused by my own read rule
   ([0042](../adr/0042-read-the-union-view-inline-it-for-aggregates-lint-the-shape.md)).
-- **14 manager-prototyped features shipped to production** through the human
-  merge gate.
-- **14 hosts instrumented** with node, database, and black-box exporters, with
-  the rule-to-SMS paging chain verified live before the old pager was cut over.
+- **30+ pull requests merged by engineering** from a manager workflow. This
+  counts merged pull requests, not commits, distinct features, or formal review
+  approvals; it is the published lower bound.
+- **14 hosts instrumented in the initial rollout** with node, database, and
+  black-box exporters, with the rule-to-SMS paging chain verified live before
+  the old pager was cut over.
 - **100+ scheduled jobs** under a file-based cron registry with a drift
   monitor.
-- **In the field this season:** 77 guides on the offline-capable guide portal,
-  3,300+ traveler SMS sent from it, and about $154K of guide expenses
-  reconciled through it.
+- **In the original June 2026 usage snapshot:** 77 guides on the
+  offline-capable guide portal, 3,300+ traveler SMS sent from it, and about
+  $154K of guide expenses reconciled through it. These are retained snapshot
+  figures, not current-season totals.
 
 ## What I got wrong, and what each one changed
 

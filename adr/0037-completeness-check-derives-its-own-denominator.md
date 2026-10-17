@@ -1,6 +1,6 @@
 # ADR 0037 - An agent's completeness check derives its own denominator and declares what it left out
 
-**Status:** Accepted · in production (the acceptance check for Tracewake's first real task, against a live product codebase)
+**Status:** Accepted · used for Tracewake's first real task against a live codebase in August 2026; Tracewake superseded in October 2026 by thirdshift
 
 **Source:** [Tracewake](https://github.com/JacobStephens2/tracewake), a public repository. The original record is ADR 0008 under its [`docs/adr/`](https://github.com/JacobStephens2/tracewake/tree/main/docs/adr), beside the code it governs. This is the generalized write-up.
 

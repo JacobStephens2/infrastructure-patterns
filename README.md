@@ -4,8 +4,10 @@ The curated home for my best Architecture Decision Records, from every system
 I run in production - private and public - written so the *reasoning* is
 visible even where the code cannot be.
 
-Every record here comes from something that is live and that someone uses. Each
-one states what I chose, what I gave up, and when I would choose differently.
+Every record here comes from a system that reached real use. Records stay when
+a system is superseded; their status lines distinguish current deployments,
+historical decisions, and changes shipped without a new measurement. Each
+record states what I chose, what I gave up, and when I would choose differently.
 Where a decision came out of an incident or a measurement, the number is in
 the record: a dashboard query that went from 1,441 seconds to 0.196, a
 six-hour outage behind a validator that printed green, a ticket whose count of
@@ -25,77 +27,83 @@ Records come from two kinds of source, and each says which it is.
 
 | System | Who uses it | Main records |
 |---|---|---|
-| **A reservations and operations platform** for a group-travel operator: a PHP 8 / MySQL 8 core modernized in production from PHP 5 / MySQL 5, four portals on one schema. I am its lead engineer. Private. | Office staff daily; tour guides in the field through an offline-capable portal | 0002, 0004, 0006, 0034, 0042-0044 |
-| **The fleet platform around it**: guarded deploys, an operator console, secrets, observability across the hosts, and Docker-based Manager Sandboxes where non-technical managers work with an AI assistant on a copy of production data. Private. | Me, the engineers I work with, and the managers who own a sandbox | 0001, 0003, 0005, 0007-0009, 0011, 0018-0022, 0028-0030, 0032, 0033, 0040, 0041, 0045-0047 |
-| **[Tracewake](https://github.com/JacobStephens2/tracewake)**, an unattended coding loop: picks up a ticket, runs each agent iteration in a fresh microVM, opens a draft pull request with nobody watching. Public. | Me, dispatching against the platform's real work tracker | 0023-0027, 0036-0039 |
+| **A reservations and operations platform** for a group-travel operator: a PHP 8.4 / MySQL 8.4 core modernized in production from PHP 5 / MySQL 5, four portals on one schema. I am its lead engineer. Private. | Office staff daily; tour guides in the field through an offline-capable portal | 0002, 0004, 0006, 0034, 0042-0044, 0058, 0061-0063 |
+| **The fleet platform around it**: guarded deploys, an operator console, secrets, observability across the hosts, and Docker-based Manager Sandboxes where non-technical managers work with an AI assistant on a copy of production data. Private. | Me, the engineers I work with, and the managers who own a sandbox | 0001, 0003, 0005, 0007-0009, 0011, 0018-0022, 0028, 0029, 0032, 0033, 0040, 0041, 0057-0060 |
+| **[Tracewake](https://github.com/JacobStephens2/tracewake)**, an unattended coding loop with a fresh microVM per iteration and proposal-only output. Public, archived; superseded by thirdshift in October 2026. | Me, dispatching against a live work tracker in September 2026 | 0023-0026, 0036-0039 |
+| **[thirdshift](https://github.com/JacobStephens2/thirdshift)**, the current open-source issue-to-pull-request factory, with review and repair sessions around deterministic CI and merge decisions. | Me, on my own repositories and the reservations platform's work tracker | 0052-0056 |
+| **A project team's planning surfaces**: requirements, sign-off records, generated status pages, and the CI that checks them. Private. | A five-person project team | 0045-0047, 0065 |
 | **[vaulted-agent](https://github.com/JacobStephens2/vaulted-agent)**: a Rust launcher that resolves per-agent secret manifests into a child process's environment. Public, released. | The fleet above, and anyone who installs it | 0028, 0048 |
-| **A paid, privacy-sensitive charting app** on the web, the App Store, and the Play Store, with end-to-end encrypted sync and subscription billing ([architecture slice](https://github.com/JacobStephens2/chart35-showcase)). | Customers on the web, iOS, and Android | 0012, 0049, 0050 |
-| **My own fleet**: one VPS serving about 70 hostnames for my products and client sites, with DNS as code across 9 zones ([sanitized mirror](https://github.com/JacobStephens2/terraform-cloudflare-dns)). | Me and my clients | 0014, 0015, 0017, 0031 |
-| **A small multiplayer word game** with an LLM grading every attempt live. | A handful of players | 0051 |
+| **A paid, privacy-sensitive charting app** on the web, the App Store, and the Play Store, with end-to-end encrypted sync and subscription billing ([architecture slice](https://github.com/JacobStephens2/chart35-showcase)). | Customers on the web, iOS, and Android | 0049, 0050, 0064 |
+| **Two copy-deployed sync services**, one for a weightlifting tracker and one for a game. | Users of each app, with separate backends | 0012 |
+| **My own fleet**: one VPS serving about 70 hostnames for my products and client sites, with DNS as code across 9 zones ([sanitized mirror](https://github.com/JacobStephens2/terraform-cloudflare-dns)). | Me and my clients | 0014, 0015, 0017, 0027, 0030, 0031 |
+| **[A small multiplayer word game](https://github.com/JacobStephens2/thereish)** with an LLM grading every attempt live. | A handful of players | 0051 |
 
 ## Evidence boundary
 
-Two environments do two different jobs, and I keep them apart on purpose.
+The status lines distinguish three environments and their proof boundaries.
 
-- A **Manager Sandbox** is a role-specific instance of the platform running in
-  a Docker container. It gives a manager and an AI assistant an isolated place
-  to explore data and prototype changes before human-reviewed promotion.
-- **Tracewake** is a single-operator unattended coding loop. Each agent
-  iteration runs in a fresh microVM under a short, asserted credential
-  inventory. It is not a Manager Sandbox. ADR
-  [0023](adr/0023-attendedness-is-a-fourth-trust-axis.md) is about why that
-  one boundary is worth its cost at single-operator scale and a heavier
-  multi-tenant design is not.
+- A **Manager Sandbox** gives a manager and an AI assistant separate application
+  files and processes over a shared writable dataset, refreshed nightly.
+  Per-manager credentials attribute access; they do not separate the data.
+  Code promotion requires engineering review. A separate SELECT-only path reads
+  production under server-enforced limits.
+- **Tracewake** ran in production in September 2026 and was superseded in
+  October. Its microVM and credential-inventory records preserve the earlier
+  decisions and say where the successor differs.
+- **thirdshift** is the current factory. Its records cover the evidence a
+  reviewer supplies, the commit whose checks were watched, and a feature's
+  review boundary. Each record states the scope its sources support.
 
 ## Start here
 
 Eight records that show the range, if you only read a few.
 
-- [0023](adr/0023-attendedness-is-a-fourth-trust-axis.md) - **Attendedness is a
-  fourth trust axis.** Why an unattended agent re-earns a microVM boundary even
-  at single-operator scale, and why nothing else from the heavy design comes
-  back with it.
-- [0036](adr/0036-review-capacity-over-a-daily-spend-cap-for-unattended-dispatch.md) -
-  **Bound unattended dispatch by review capacity.** The scarce resource in an
-  agent pipeline is human review, so that is what the limiter should count.
-- [0037](adr/0037-completeness-check-derives-its-own-denominator.md) - **A
-  completeness check derives its own denominator.** Backpressure for an agent
-  task that has no test suite, and why the number in the ticket is never the
-  number to check against.
+- [0052](adr/0052-a-fresh-session-second-look-over-a-second-model-family.md) -
+  **Put the second look where it earns its cost.** A published replay study
+  supports a proposed second look after feature review; it is not yet built.
+- [0056](adr/0056-a-features-tickets-merge-into-one-branch-so-review-happens-once.md) -
+  **Review the feature once.** Ticket work meets on one branch so the human
+  review queue counts features rather than implementation steps.
+- [0058](adr/0058-the-hosted-runner-asks-and-the-host-decides.md) - **The hosted
+  runner asks; the host decides.** A short-lived OIDC assertion requests a
+  deploy while the production host rechecks its authority and eligibility.
+- [0061](adr/0061-release-the-session-lock-before-slow-work.md) - **Release the
+  session lock before slow work.** Healthy aggregate metrics hid a staff
+  member's requests queueing behind each other.
 - [0042](adr/0042-read-the-union-view-inline-it-for-aggregates-lint-the-shape.md) -
   **Read the view, inline it for aggregates, lint the shape.** A production
   incident caused by following my own rule, and a lint test as the fix because
   nothing about the results was ever wrong.
 - [0028](adr/0028-per-consumer-secret-manifests-and-validate-every-manifest-read.md) -
-  **One secret manifest per consumer.** A vault rename took down four units for
-  six hours while the validator printed green. What changed so the next one
-  kills one consumer instead of the box.
-- [0045](adr/0045-append-only-jsonl-in-git-as-the-only-record.md) - **JSONL in
-  git as the only record.** Reversing my own decision fifteen days later, after
-  finding that the backup it depended on was never built.
+  **One secret manifest per consumer.** A vault rename took down four units
+  for six hours while the validator printed green.
 - [0046](adr/0046-preview-containment-in-the-application-proved-by-egress-test.md) -
-  **Isolation is proved, not inferred.** A preview tier holding production SMS
-  credentials behind an override file that was present, well-formed, and never
-  read.
-- [0048](adr/0048-static-musl-release-binaries-with-a-ci-guard.md) - **Static
-  musl releases with a CI guard.** A binary that called nothing from glibc 2.39
-  and still refused to load without it.
+  **Isolation is proved, not inferred.** A preview override file was present,
+  well-formed, and never read; a running egress test became the proof.
+- [0064](adr/0064-authority-over-a-shared-record-follows-the-person-it-is-about.md) -
+  **Authority follows the person the record is about.** Sharing and billing
+  follow that rule through handover, departure, and deletion.
 
 ## Decision records
 
-All 50 records, grouped by the problem they belong to. Numbers are
-chronological and never reused, so a gap is a record that was withdrawn. These also read on the web, rendered from this
-repo, at [stephens.page/decisions](https://stephens.page/decisions/).
+All 64 records, grouped by the problem they belong to. Numbers are
+chronological and never reused, so a gap is a record that was withdrawn. A
+partial web mirror is at
+[stephens.page/decisions](https://stephens.page/decisions/); this repository is
+current, and the mirror needs regeneration after updates.
 
 ### Running AI agents against production systems
 
-Isolation, identity, and credentials first (0001-0010), then the unattended case where nobody is watching (0023-0026, 0035), then what it takes to operate that loop day to day (0036-0041).
+Isolation, identity, and credentials first (0001-0010), then Tracewake's
+unattended loop (0023-0026, 0036-0039), live sandbox proofs (0035), and
+fleet instruction and workflow design (0040-0041), and thirdshift's review machinery (0052-0056). The primary-read
+record (0057) revisits the sandbox's data boundary.
 
 | # | Decision | Trade-off in one line |
 |---|----------|------------------------|
-| [0001](adr/0001-docker-over-bare-metal-for-tenant-isolation.md) | Docker over bare-metal for per-tenant isolation | Pay image/ops overhead to get strong filesystem + DB-user isolation cheaply |
+| [0001](adr/0001-docker-over-bare-metal-for-tenant-isolation.md) | Docker over bare-metal for application isolation | Pay container overhead for separate files and processes; shared sandbox data remains a deliberate cost |
 | [0003](adr/0003-periodic-snapshot-over-live-replication.md) | Periodic snapshot over live replication for Manager Sandboxes | Accept some staleness to gain isolation, reset-ability, and no prod write-path risk |
-| [0005](adr/0005-scoped-system-user-over-service-account.md) | A scoped system user over a shared service account for an autonomous agent | More host setup in exchange for clean per-action auditing and least privilege |
+| [0005](adr/0005-scoped-system-user-over-service-account.md) | A scoped system user over a shared service account for an autonomous agent | More host setup for per-identity attribution, with database grants and container boundaries reviewed separately |
 | [0009](adr/0009-default-deny-host-pinned-db-access.md) | Default-deny, host-pinned DB access over a trusted network | Take on provisioning friction so a leaked credential isn't portable off its host |
 | [0010](adr/0010-pixel-equality-gate-over-diff-review-for-generated-markup.md) | A pixel-equality gate over diff review for changes to generated markup | Pay a render/diff harness to safely change markup you can't audit by eye - it proves visual, not semantic, equality |
 | [0023](adr/0023-attendedness-is-a-fourth-trust-axis.md) | Attendedness is a fourth trust axis: a per-iteration microVM boundary for unattended agents, even at single-operator scale | Re-earn exactly one subsystem - the execution boundary - because "I notice and fix" is the premise that lets solo-scale isolation collapse, and an unattended run is defined by nobody noticing; everything else in the heavy factory stays deleted |
@@ -109,6 +117,12 @@ Isolation, identity, and credentials first (0001-0010), then the unattended case
 | [0039](adr/0039-containment-below-configuration-for-previewing-unreviewed-code.md) | Preview unreviewed code on the credentialed host, with containment below configuration | Allow a branch to render where production credentials live because someone is watching it - and make the database grant, not the connection string, the control, since the previewed code is exactly the code that might ignore its config |
 | [0040](adr/0040-serial-subagent-rounds-over-detached-parallel-processes.md) | Serial rounds run as harness subagents, over detached parallel CLI processes | Give up throughput and process survival - parallelism saved about ten minutes and cost a merge round, a re-gate, and a second correction - to delete a process-management layer that once resumed the wrong session |
 | [0041](adr/0041-one-primary-agent-file-byte-identical-shared-layer-per-host-facts.md) | One primary agent instruction file, a byte-identical shared layer, and per-host environment facts beside it | Add a pointer and a checksum check so every harness, not just one vendor's, is told what a host can touch - after five 'generic' instruction files turned out to have drifted into five versions |
+| [0052](adr/0052-a-fresh-session-second-look-over-a-second-model-family.md) | A fresh-session second look over a second model family | Decline an extra model family inside each Run; the feature-level second look remains proposed |
+| [0053](adr/0053-a-review-finding-carries-a-failing-test-and-a-decline-cites-the-run.md) | A review finding carries a failing test; a decline cites the run | Spend reviewer effort on runnable evidence and declared coverage so declines can be checked |
+| [0054](adr/0054-merge-the-exact-head-whose-ci-was-watched-over-platform-auto-merge.md) | Merge the exact head whose CI was watched | Keep merge authority inside the repair loop, and stop when repository review policy refuses |
+| [0055](adr/0055-decide-ci-outcomes-from-structured-state-not-the-agents-account.md) | Decide CI outcomes from structured state | Match failures against the base and grant one unchanged-head re-run, without interpreting agent prose |
+| [0056](adr/0056-a-features-tickets-merge-into-one-branch-so-review-happens-once.md) | A feature's tickets merge into one branch so review happens once | Trade ticket-level review for a whole-feature review, accepting early ticket closure and branch CI limits |
+| [0057](adr/0057-a-sandbox-reads-the-primary-not-a-replica-that-can-stall-silently.md) | A sandbox reads the primary over a replica that can stall silently | Read canonical state under server-enforced query and account limits, accepting production read load |
 
 ### Secrets, access, and perimeter
 
@@ -116,8 +130,8 @@ Isolation, identity, and credentials first (0001-0010), then the unattended case
 |---|----------|------------------------|
 | [0018](adr/0018-runtime-injected-secrets-over-plaintext-config.md) | Runtime-injected secrets over plaintext config, with the store matched to the team | Hold one invariant (encrypted at rest, injected into the environment at runtime) and pay for two backends - a broker where a team needs sharing/revocation/audit, SOPS + age where a solo fleet needs offline zero-vendor recovery - rather than force one tool to fit both |
 | [0028](adr/0028-per-consumer-secret-manifests-and-validate-every-manifest-read.md) | One secret manifest per consumer, generated from a tracked declaration; validate every manifest the machine reads | Take on a generator, a startup assertion, and a constants file so a vault rename kills one consumer instead of the box - after a 252-reference shared manifest took down four units for six hours while the validator printed green |
-| [0019](adr/0019-reuse-passkey-session-forward-auth-over-second-auth-stack.md) | Reuse an existing passkey session to gate a second app (Caddy forward_auth) over standing up a second auth stack | Gate a second internal app by delegating to one hardened passkey session via Caddy forward_auth - ~40 lines of Caddyfile, zero new auth code, every tool inheriting the gate's future hardening - at the cost of concentrating trust in a single session |
-| [0020](adr/0020-private-mesh-for-shells-mfa-gated-public-endpoints-for-browsers.md) | A private mesh for operator shells, public MFA-gated endpoints for browser consoles, over one VPN for everything | Put SSH behind a WireGuard mesh and drop public :22, but keep browser admin consoles public behind per-audience MFA - size the boundary to who uses it, rather than hide the consoles non-technical staff reach by URL behind a VPN client they can't maintain |
+| [0019](adr/0019-reuse-passkey-session-forward-auth-over-second-auth-stack.md) | Reuse an existing passkey session to gate a second app (Caddy forward_auth) over standing up a second auth stack | Gate a second internal app by delegating to one hardened passkey session via Caddy forward_auth - one proxy block and no second credential store, every tool inheriting the gate's future hardening - at the cost of concentrating trust in a single session |
+| [0020](adr/0020-private-mesh-for-shells-mfa-gated-public-endpoints-for-browsers.md) | A private mesh for operator shells, public authenticated endpoints for browser consoles, over one VPN for everything | Put SSH behind a WireGuard mesh and drop public :22 on enrolled hosts, but keep browser admin consoles public behind application authentication - size the boundary to who uses it, rather than hide the consoles non-technical staff reach by URL behind a VPN client they can't maintain |
 | [0034](adr/0034-root-allowlist-with-404-over-blocklist-with-403-for-a-legacy-webroot.md) | A strict root allowlist returning 404 over a growing blocklist returning 403, for a legacy repository-as-webroot | Fail closed against files nobody anticipated and stop confirming their existence to scanners, without the multi-quarter refactor of moving the document root - which the allowlist now guards |
 | [0043](adr/0043-audit-history-never-retains-secret-values-retroactively.md) | Audit history never retains secret values, and existing history is migrated to match | Deliberately destroy the recoverability of old credential values, because an audit trail is not a credential store - history keeps who and when, redacts diffs, and omits the field from anything restorable |
 | [0044](adr/0044-additive-fail-closed-section-permissions.md) | Section permissions are additive on top of page permissions and fail closed | Make granting more verbose so a hand-built request cannot mutate a section its author cannot view, and a misconfiguration fails as 'cannot see it' rather than 'can' |
@@ -128,15 +142,19 @@ Isolation, identity, and credentials first (0001-0010), then the unattended case
 
 | # | Decision | Trade-off in one line |
 |---|----------|------------------------|
-| [0004](adr/0004-shell-deploy-over-hosted-ci-runner.md) | A guarded shell deploy over a hosted CI runner | Forgo ecosystem features for a dependency-free, auditable single-server deploy |
-| [0029](adr/0029-pin-the-serving-checkout-fast-forward-only-edit-in-worktrees.md) | Pin the shared serving checkout fast-forward-only, refuse-and-alert on a dirty tree, edit only in worktrees | Give up "restart and it's live" on one service to stop the inverted-signal failure where the newest commit carries the oldest content - the pin is a detector, the default worktree and a stale-path pre-commit hook are the barrier |
+| [0004](adr/0004-shell-deploy-over-hosted-ci-runner.md) | A guarded shell deploy over a hosted CI runner | Keep guarded execution on the host; automatic requests now arrive through OIDC from hosted CI |
+| [0029](adr/0029-pin-the-serving-checkout-fast-forward-only-edit-in-worktrees.md) | Pin the shared serving checkout fast-forward-only, refuse-and-alert on a dirty tree, and guard stale paths | Give up "restart and it's live" on one service to stop the inverted-signal failure where the newest commit carries the oldest content - the pin detects dirt, a stale-path hook guards commits, and interactive sessions now land in the serving checkout |
 | [0030](adr/0030-immutable-releases-atomic-promotion-append-only-journal.md) | Immutable per-commit releases, atomic promotion, an append-only journal; re-promotion is a named attended operation; root-pinned authority drift is reported, never a failure | Pay a promoter and a journal so no exit leaves production unnamed, hand-editing the symlink is the thing the design refuses, and a merge can never expand what root pinned - drift is shown, not paged |
 | [0031](adr/0031-ci-deploy-key-restricted-to-one-forced-command-over-host-pull.md) | A CI deploy key that reaches a shared host, restricted to one installed forced command, over having the host pull | Let a CI secret reach a host that serves client work because it cannot open a shell - forced command outside the deployed tree, pinned host key - in exchange for sub-minute deploys without a listener or a timer |
-| [0046](adr/0046-preview-containment-in-the-application-proved-by-egress-test.md) | Preview containment lives in the application, and isolation is proved by an egress test rather than inferred from a config file | Decline a network block in favor of inspectable sinks, and refuse to call a slot contained until an egress test passes - after a per-slot override file turned out to be present, well-formed, and never read |
+| [0046](adr/0046-preview-containment-in-the-application-proved-by-egress-test.md) | Preview containment lives in the application, and isolation is proved by an egress test rather than inferred from a config file | Route outbound effects into inspectable sinks, and refuse to call a slot contained until an egress test passes - after a per-slot override file turned out to be present, well-formed, and never read |
 | [0048](adr/0048-static-musl-release-binaries-with-a-ci-guard.md) | Ship static musl release binaries with a CI guard, over glibc builds from whatever the runner has | Give up in-process NSS lookups to remove the glibc floor entirely - after a CI image bump put a non-weak `GLIBC_2.39` reference in a binary that called nothing from 2.39 and broke every stable server distro |
 | [0013](adr/0013-staged-declarative-provisioning-over-imperative-bootstrap.md) | Staged declarative provisioning (Terraform + cloud-init + separate deploy) over one imperative bootstrap script | Take on Terraform state and a deliberately create-only provisioning token for a single box to get a reproducible, reviewable host and a clean provision/configure/deploy seam |
 | [0014](adr/0014-import-live-dns-over-recreating-it.md) | Import ~220 live DNS records into Terraform over recreating them from a desired-state list | Accept verbose generated config and provider quirks to adopt traffic-serving records with zero downtime and a no-op baseline plan, instead of risking duplicate-creates and silent deletion of forgotten records |
 | [0015](adr/0015-state-off-the-provider-it-provisions.md) | Keep Terraform state on a different provider than the compute it provisions | Take on a second vendor + scoped IAM key so a provider-level outage can't destroy both the infrastructure and the state needed to rebuild it |
+| [0058](adr/0058-the-hosted-runner-asks-and-the-host-decides.md) | The hosted runner asks and the host decides | Use short-lived OIDC requests while the host rechecks identity, the commit, CI, and live state |
+| [0059](adr/0059-two-processes-one-release-refuse-when-they-disagree.md) | Two processes are one release; refuse when they disagree | Pin the console and worker together and refuse production work when their revisions or liveness disagree |
+| [0060](adr/0060-a-failed-deploy-pauses-nothing-and-recovery-reads-production.md) | A failed deploy pauses nothing; recovery reads production | Re-establish eligibility each time and spend one bounded recovery retry against live production evidence |
+| [0065](adr/0065-assert-enforcement-at-the-script-the-workflow-and-the-ruleset.md) | Assert enforcement at the script, workflow, and ruleset | Test script/workflow failure propagation and verify active required-check registration before claiming merge is blocked |
 
 ### Data, records, and correctness
 
@@ -150,31 +168,37 @@ Isolation, identity, and credentials first (0001-0010), then the unattended case
 | [0047](adr/0047-scripts-hide-rows-and-derive-no-figures.md) | On a generated status site, scripts hide rows and derive no figures | Cost readers a filter-scoped distribution so every number has exactly one definition - enforced as a property of the rendered output, with the check's three blind spots written down beside it |
 | [0012](adr/0012-copy-deployed-sync-services-over-shared-multi-tenant-backend.md) | Per-app copy-deployed sync services over a shared multi-tenant backend | Run N near-identical small services to gain physical blast-radius isolation and per-app sync-model freedom, at the cost of hand-applying shared-auth fixes across copies |
 | [0049](adr/0049-expand-contract-entitlements-old-endpoint-kept-reads-fail-open.md) | A closed, provider-independent entitlement state, migrated expand-then-contract, with the old endpoint kept indefinitely and reads failing open | Carry a permanent compatibility endpoint because released desktop builds embed old JavaScript, leave ambiguous legacy rows `unclassified` rather than guess, and give away uploads during my own outage rather than lock out a paying customer |
-| [0050](adr/0050-one-conformance-corpus-over-three-hand-written-engines.md) | One language-neutral conformance corpus over three hand-written engines, until a shared core can retire them | Keep implementing every rule three times for now, but make drift mechanical to detect - amend the corpus first, watch three suites go red - and let the same file become the rewrite's acceptance suite |
+| [0050](adr/0050-one-conformance-corpus-over-three-hand-written-engines.md) | One language-neutral conformance corpus over three hand-written engines | Keep implementing every rule three times for now, but make drift mechanical to detect - amend the corpus first, watch three suites go red - without depending on a shared-engine rewrite that is no longer planned |
 | [0051](adr/0051-repeatable-llm-judge-over-accurate-one-when-the-verdict-is-cached.md) | A repeatable LLM judge over a more accurate one when the first verdict is cached as precedent | Pick the model with a constant bias over the one with less bias and more noise, because calibration subtracts an offset once and nothing subtracts variance after the cache has frozen it |
+| [0061](adr/0061-release-the-session-lock-before-slow-work.md) | Release the session lock before slow work | Restore concurrent requests for one user, and make accidental mutex behavior explicit |
+| [0062](adr/0062-tests-refuse-the-production-schema-and-a-wiring-check-enforces-it.md) | Tests refuse the production schema, with a wiring check | Guard the dangerous database before bootstrap and test that every integration entry point uses the guard |
+| [0064](adr/0064-authority-over-a-shared-record-follows-the-person-it-is-about.md) | Authority over a shared record follows the person it is about | Separate billing from authority and make handover, departure, and deletion obey the same rule |
 
 ### Observability and capacity
 
 | # | Decision | Trade-off in one line |
 |---|----------|------------------------|
 | [0007](adr/0007-pull-probes-over-push-agents.md) | Pull-based health probing over push agents for a small fleet | Forgo deep metrics/history to keep the monitored fleet agent-free and the failure domain legible |
-| [0011](adr/0011-instrumented-metrics-stack-over-bespoke-prober.md) | A pull-based metrics stack over a bespoke prober, data plane kept private | Take on a TSDB to run for real metrics/history/alerting - and bind the unauthenticated parts to loopback, exposing only one read-only pane |
+| [0011](adr/0011-instrumented-metrics-stack-over-bespoke-prober.md) | A pull-based metrics stack alongside a bespoke prober, data plane kept private | Take on a TSDB to run for real metrics/history/alerting - keep co-located backends on loopback, pin remote exporters to the monitoring host, and publish a static pane while live Grafana stays behind login |
 | [0021](adr/0021-shared-collector-seam-over-direct-backend-wiring.md) | A shared OpenTelemetry collector seam over direct backend wiring | Add one collector as the ingestion seam so new telemetry sources and backends are configuration, not new architecture - agent usage metrics only, never prompt content |
 | [0022](adr/0022-colocated-loki-behind-collector-seam-over-dedicated-log-stack.md) | Complete the logs pillar with a co-located local-disk Loki behind the collector seam, over a dedicated or hosted log stack | Add single-binary Loki beside Prometheus/Tempo on the one monitoring node, ingested only through the shared collector seam and bound to localhost - one query surface and native trace-to-logs for near-zero new infrastructure, at the cost of a deeper single-box blast radius and a 31-day local-disk retention ceiling with object storage as the written-down escape hatch |
 | [0033](adr/0033-grow-the-disk-and-cap-retention-by-size.md) | Grow the monitoring host's own disk over a block volume, and cap retention by size | Take a one-way, power-off resize because a grandfathered allocation made it free - and accept that the bigger disk is not the guard; the size-based retention cap and log hygiene are |
-| [0032](adr/0032-dedicated-host-for-unauthenticated-ingestion-store-private-by-construction.md) | The first unauthenticated-ingestion workload gets its own host; store private by construction; admin gated by a named permission; masking proof per property; abort written before launch | Pay a dedicated small host and a volume so browser-driven POSTs never land beside fleet keys or prod sandboxes, and prove masking by grepping the store for planted strings rather than looking at the player |
+| [0032](adr/0032-dedicated-host-for-unauthenticated-ingestion-store-private-by-construction.md) | The first unauthenticated-ingestion workload gets its own host; store private by construction; admin gated by a named permission; masking proof per property; abort written before launch | Pay a dedicated small host and a volume so browser-driven POSTs never land beside fleet keys or prod sandboxes, and prove recording first, then inspect stored probes against the policy in force |
+| [0063](adr/0063-watch-the-work-not-the-process-with-a-window-longer-than-the-stall.md) | Watch the work, not the process, with a window longer than the stall | Alert on missing work and checkpoints, accepting a detection window long enough to see delayed evidence |
 
 ## Companion code
 
 - [`observability/`](observability/) - the sanitized Prometheus and
   Alertmanager configuration and Grafana dashboards behind ADR 0011.
 - [Tracewake](https://github.com/JacobStephens2/tracewake) - the unattended
-  coding loop behind ADRs 0023-0026 and 0036-0039.
+  coding loop behind ADRs 0023-0026 and 0036-0039, now archived and superseded.
+- [thirdshift](https://github.com/JacobStephens2/thirdshift) - the current
+  issue-to-pull-request factory behind ADRs 0052-0056.
 - [vaulted-agent](https://github.com/JacobStephens2/vaulted-agent) - the
   runtime-secrets launcher behind ADRs 0018, 0028, and 0048.
 - [terraform-cloudflare-dns](https://github.com/JacobStephens2/terraform-cloudflare-dns) -
-  the sanitized Terraform, Cloudflare, and Ansible DNS-as-code repo behind ADRs
-  0013-0015.
+  a sanitized June 2026 snapshot of the Terraform, Cloudflare, and Ansible
+  DNS-as-code setup behind ADRs 0013-0015.
 
 ## Companion artifacts
 

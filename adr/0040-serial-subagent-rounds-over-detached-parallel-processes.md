@@ -1,6 +1,6 @@
 # ADR 0040 - Serial rounds run as harness subagents, over detached parallel CLI processes
 
-**Status:** Accepted · in production (the spec-implementation workflow used for overnight agent runs; supersedes two earlier decisions in the same workflow)
+**Status:** Accepted · in production (the upstream spec-implementation workflow; a local planning fork retains detached parallel rounds)
 
 ## Context
 
@@ -52,6 +52,23 @@ buying survival for a process with nothing left to report to.
   property rather than an accident to engineer around.
 - **The workflow is portable across harnesses** because it depends on a concept
   they share rather than on one vendor's flags.
+
+## Amendment - 2026-10-16
+
+The retirement described above applies to the upstream workflow. Its current
+instructions still run rounds serially as harness subagents. A maintained
+local fork in the planning repository retains detached CLI rounds and runs
+three or four at a time. It is reconciled by hand, so changing the upstream
+did not retire that machinery in the fork.
+
+[thirdshift](https://github.com/JacobStephens2/thirdshift) makes another choice:
+up to three ticket Runs execute as child processes by default. Each keeps its
+own failure and continuation path; a conflict goes through its existing Repair
+loop. A child crash cannot take down sibling Runs. That buys speed at the cost
+of Repairs, where the original workflow measured a merge round and a re-gate.
+[ADR 0056](0056-a-features-tickets-merge-into-one-branch-so-review-happens-once.md)
+records that trade. Serial rounds remain the upstream choice, not a claim
+that every independently repairable ticket must run serially.
 
 ## When I'd revisit
 

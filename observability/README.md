@@ -3,9 +3,11 @@
 The concrete, sanitized companion to
 [ADR 0011](../adr/0011-instrumented-metrics-stack-over-bespoke-prober.md): a
 pull-based metrics stack (Prometheus + Grafana + Alertmanager + node/blackbox
-exporters) configured as code, with every unauthenticated component on loopback
-and one read-only Grafana pane published as a baked image (the live instance
-stays behind login).
+exporters) configured as code. This single-host example keeps its backends and
+exporters on loopback; the fleet design pins remote exporters to the monitoring
+host. One read-only Grafana pane is published as a baked image; the live
+instance stays behind login. The stack runs alongside the liveness prober,
+adding history and alerting.
 
 The rest of this repo is generalized ADRs - reasoning without code. This
 directory is the exception: the config and dashboards that make the pattern in

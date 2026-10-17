@@ -69,19 +69,19 @@ OTEL SDKs at the same collector.
 
 ## Phased rollout
 
-1. **Collector plus agent metrics on the automation host.** Verified end to end:
+- **Collector plus agent metrics on the automation host.** Verified end to end:
    session, token, cost, and active-time series in Prometheus, labelled by host and
    model.
-2. **Agent metrics across the fleet.** Managed settings deployed to all ten
+- **Agent metrics across the fleet.** Managed settings deployed to all ten
    agent-running hosts; OTLP reachability confirmed from each; a starter Grafana
    dashboard is live.
-3. **Application tracing.** The monitoring host was resized in place (no IP change)
+- **Application tracing.** The monitoring host was resized in place (no IP change)
    to give Tempo headroom. Tempo runs monolithic with local-disk blocks and 7-day
    retention, fed OTLP traces by the collector and wired as a Grafana datasource.
    Two FastAPI services are auto-instrumented via `opentelemetry-instrument`, and an
    LLM-proxy in front of one emits spans through its built-in `otel` callback.
    Traces are confirmed flowing and queryable.
-4. **Legacy PHP app tracing.** Prototyped on a staging host that mirrors
+- **Legacy PHP app tracing.** Prototyped on a staging host that mirrors
    production. The `opentelemetry` PECL extension is built and loaded; the OTEL PHP
    SDK, OTLP exporter, and PDO auto-instrumentation come in via Composer; a fail-safe
    `auto_prepend_file` bootstrap opens a SERVER root span per request; php-fpm passes

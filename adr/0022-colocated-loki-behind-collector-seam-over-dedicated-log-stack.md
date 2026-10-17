@@ -1,6 +1,6 @@
 # ADR 0022 - Complete the logs pillar with a co-located local-disk Loki behind the collector seam, over a dedicated or hosted log stack
 
-**Status:** Accepted · in production (Loki live on the monitoring host; the monitoring host's own journald shipping end to end; fleet sources sequenced by debugging value)
+**Status:** Accepted · in production (all three telemetry pillars live on one monitoring host; 14 fleet hosts ship journald, with Apache/PHP and MySQL slow-query files through the collector)
 
 ## Context
 
@@ -118,12 +118,13 @@ has headroom rather than crowding the alerting it shares a box with.
 
 ## Follow-ups
 
-- Ship the high-value sources (the production platform's Apache/PHP, MySQL slow-query log),
-  then journald fleet-wide, via per-host shippers (Grafana Alloy or otelcol)
-  exporting OTLP to the collector - never direct to Loki.
-- Convert the Tempo datasource to file provisioning alongside Loki so the
-  trace-to-logs link is codified, and add a Prometheus scrape of Loki's own
-  `/metrics` (self-monitoring).
+The source-shipping and provisioning work is complete as of 2026-10-16:
+14 hosts ship journald through per-host OpenTelemetry collectors with
+disk-backed retry queues; application error files and MySQL slow queries
+ship through the same seam. The Tempo datasource and trace-to-logs link are
+file-provisioned, and Prometheus scrapes Loki's own metrics with health and
+ingestion alerts. Log-pattern alerts remain a separate follow-up.
+
 - Loki ruler alerts on log patterns (PHP fatals, repeated auth failures) into the
   Alertmanager already on the box, once a baseline exists.
 - Decide the object-storage cutover *before* a PCI or volume need forces it, in

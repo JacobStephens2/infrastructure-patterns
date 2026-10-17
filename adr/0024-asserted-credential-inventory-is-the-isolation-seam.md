@@ -1,8 +1,8 @@
 # ADR 0024 - A short, script-asserted credential inventory on the agent box; the inventory, not the network hop, is the isolation seam
 
-**Status:** Accepted · in production (inventory asserted before every dispatch; single-host mode gated on it)
+**Status:** Accepted · ran in production in Tracewake in September 2026; superseded in October 2026 by thirdshift
 
-**Source:** [Tracewake](https://github.com/JacobStephens2/tracewake), a public repository. The original records are ADR 0009 and 0019 under its [`docs/adr/`](https://github.com/JacobStephens2/tracewake/tree/main/docs/adr), beside the code they govern. This is the generalized write-up.
+**Source:** [Tracewake](https://github.com/JacobStephens2/tracewake), a public repository. The original records are ADR 0005, 0009, 0011, 0013, 0018, 0019 and 0029 under its [`docs/adr/`](https://github.com/JacobStephens2/tracewake/tree/main/docs/adr), beside the code they govern. This is the generalized write-up.
 
 ## Context
 
@@ -49,18 +49,18 @@ one-machine operator wanted to skip the second box entirely.
   review is the compensating control for a compromised box producing verified
   commits in the operator's name.
 - **The notification surface lives at the scheduler, not on the box.** A
-  finished run comments on its own pull request (a surface the repository token
-  already reaches). Email for failure-shaped events - a run that ended without
-  a proposal, a dispatch or preflight failure, an approaching credential expiry
-  - is sent from the scheduler side, which already observes every outcome and
-  already holds mail credentials. The box's whole external reach stays "the
-  repository."
+  finished run comments on its own pull request as the on-PR record. The
+  scheduler is the single email carrier for four events: a green proposal, a
+  run that ended without one, a dispatch or preflight failure, and an
+  approaching credential expiry. It already observes every outcome and holds
+  mail credentials. The box gains neither a mail credential nor a mail
+  endpoint on its egress allowlist.
 - **Single-host mode is gated by the same assertion.** The scheduler may
   dispatch runs on its own machine only while that machine passes the exact
   inventory check the dedicated box passes. The seam was never physical
   distance; it was credential blast radius. A machine with production reach
-  fails the check and cannot dispatch locally - by construction, not by
-  documentation.
+  fails the check and cannot dispatch locally. An absent or non-executable
+  assertion also refuses dispatch before git or the run starts.
 
 ## Consequences
 
@@ -82,12 +82,23 @@ one-machine operator wanted to skip the second box entirely.
   alarmed, and a missed success email is the low-stakes miss - the proposal
   itself waits on the code host regardless.
 
+## Amendment - 2026-10-16
+
+The shipped product made single-host operation the documented default on
+2026-09-14. The remote box remained a substitutable command. The inventory
+gate above became the ordinary path, with the same refusal on a missing
+assertion; physical separation remained appropriate when the scheduler held
+other credentials.
+
+The email carrier had already changed before this write-up: the code host's
+account-global own-updates setting flooded the inbox with activity from
+every agent session, so it was turned off. The scheduler carried successes
+as well as failures; the pull-request comment remained the review record.
+
 ## When I'd revisit
 
 If the box ever needs to reach a second external system (a deploy target, a
 package registry with push), that is a second inventory line and a second
-egress entry, decided in an ADR, not a convenience. If the code host's
-account-level notification settings change shape, the "comment on your own
-PR" carrier is the first thing to re-test - it failed once already when an
-account-global "notify me of my own updates" setting flooded every agent
-session's activity into one inbox.
+egress entry, decided in an ADR, not a convenience. If notification delivery
+moves again, the carrier must still reach every named outcome without
+widening the box's credential inventory.

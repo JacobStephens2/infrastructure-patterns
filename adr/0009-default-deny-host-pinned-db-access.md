@@ -31,6 +31,14 @@ create a host-scoped grant. This composes with the per-agent identity work in
   two places - and the standing discipline to keep the allowlist current as
   hosts come and go.
 
+## Amendment - 2026-09-22
+
+The sandbox's new SELECT-only production read path uses the same host-pinning
+rule. Pinning binds a credential to a client, not to a single destination:
+replicated grants also need review on every replica whose firewall admits that
+client. [ADR 0057](0057-a-sandbox-reads-the-primary-not-a-replica-that-can-stall-silently.md)
+records that check alongside the primary-read decision.
+
 ## When I'd revisit
 
 At a scale where clients are dynamic or ephemeral - autoscaling, short-lived

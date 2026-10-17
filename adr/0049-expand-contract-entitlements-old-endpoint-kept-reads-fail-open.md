@@ -65,6 +65,14 @@ someone keeps the app installed.
 - `unclassified` rows are a visible, honest debt rather than an invisible wrong
   guess.
 
+## Amendment - 2026-10-16
+
+The expand phase is complete: the legacy internals were contracted away on
+2026-08-25, while the compatibility response remains. Billing still decides
+an entitlement, not authority over somebody else's shared record.
+[ADR 0064](0064-authority-over-a-shared-record-follows-the-person-it-is-about.md)
+records that separate boundary.
+
 ## When I'd revisit
 
 If the old response shape can ever be shown to have no remaining callers, it

@@ -1,6 +1,6 @@
 # ADR 0031 - A CI deploy key that reaches a shared host, restricted to one installed forced command, over having the host pull
 
-**Status:** Accepted · in production (a small dashboard on a host that also serves client work)
+**Status:** Accepted · in production (a shared-host fleet deployer; generalized from one dashboard)
 
 ## Context
 
@@ -17,7 +17,7 @@ runs the deployer locally.
 
 - **The key is allowed to reach the host because it cannot open a shell.** Its
   `authorized_keys` entry forces one command - the deployer that the installer
-  placed under `/usr/local/bin`, *not* the file of the same name inside the
+  placed outside the checkout, *not* the file of the same name inside the
   deployed checkout - and that command takes a revision and nothing else. It
   moves the copy, restarts the service, and reinstalls dependencies when they
   changed. It does not install unit files or the virtual host, does not reload
@@ -60,10 +60,27 @@ runs the deployer locally.
   tunnel, [ADR 0020](0020-private-mesh-for-shells-mfa-gated-public-endpoints-for-browsers.md))
   was not weighed, and is recorded as open rather than rejected.
 
+## Amendment - 2026-10-16
+
+The single-dashboard shape became a registry-driven deployer for the shared
+host's fleet. Each site has its own restricted key, fixed to that site's entry;
+the registry declares its branch, checkout, after-deploy commands, and health
+check. The installed program serializes deployments, refuses a dirty checkout
+or the wrong branch, and requires a fast-forward. A written exceptions list
+keeps release-directory applications, image deployments, and other incompatible
+shapes on their own deployers.
+
+This avoids copying the guardrails into one script per site. It also gives one
+program a wider blast radius: a deployer bug can affect every registered site,
+and a new registry entry is a trust decision that needs review. The registry
+and restricted-key installer are present in the source; this review did not
+re-prove every site's live key or deployment.
+
 ## When I'd revisit
 
-If the key's cost ever outweighs time-to-deploy - a second service wanting the
-same shape, or an audit that dislikes any CI-held SSH key - the pull-based
-alternative is the door to reopen. If the service ever holds anything whose
-leak is harm rather than embarrassment, the network-reach option moves from
+The second-service condition arrived and led to the registry above. If the
+key's cost ever outweighs time-to-deploy, or an audit rejects CI-held SSH keys,
+the pull-based alternative is the door to reopen. If the service ever holds
+anything whose leak is harm rather than embarrassment, the network-reach option
+moves from
 "unexamined" to "examine first."

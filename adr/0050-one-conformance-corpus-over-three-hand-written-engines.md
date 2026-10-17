@@ -1,6 +1,6 @@
 # ADR 0050 - One language-neutral conformance corpus over three hand-written engines, until a shared core can retire them
 
-**Status:** Accepted · in production (the rules engine of a paid charting app, implemented separately for web, Android and Wear OS, and Apple platforms including the watch)
+**Status:** Accepted · in production for the web engine (the same corpus runs against Kotlin and Swift watch engines; watch distribution remains unfinished)
 
 ## Context
 
@@ -14,11 +14,11 @@ Kotlin for Android and Wear OS, Swift for Apple platforms and the watch. The
 web implementation is the reference; the native apps each re-implement it in
 their platform's own language.
 
-The clean answer is one shared engine compiled to every target. It is
-underway, and it is a rewrite of the most correctness-sensitive code in the
-product. Until it lands, three implementations will drift unless something
-stops them, and "careful review" is not a thing that stops drift across three
-languages.
+A shared engine compiled to every target was attempted in June 2026 and set
+aside. It did not become the production engine. The native work proceeded
+without waiting for it, so three implementations remain an ongoing maintenance
+cost. They will drift unless something stops them, and "careful review" is not
+a thing that stops drift across three languages.
 
 ## Decision
 
@@ -49,15 +49,24 @@ the computed classification for every date.
 - **The corpus is only as good as its cases.** It proves the engines agree on
   what it contains and says nothing about inputs nobody wrote down. Three
   engines can agree and all be wrong.
-- **The corpus is the migration plan.** When the shared core lands, this file
-  becomes its acceptance suite, and the three hand-written engines retire
-  against it. The rewrite is judged by the behavior users already
-  depend on rather than by a fresh reading of the rules.
+- **The corpus outlived the attempted rewrite.** It keeps the separate engines
+  accountable now. If a shared core is taken up again, the same file becomes
+  its acceptance suite, judged by the behavior users already depend on rather
+  than by a fresh reading of the rules.
+
+## Amendment - 2026-10-16
+
+The earlier version described the shared core as underway. That premise was
+stale: the attempted core was set aside, while the corpus and three engines
+remained. The Context and Consequences above now state that boundary; the
+corpus is an ongoing control, not a temporary wait for a scheduled rewrite.
 
 ## When I'd revisit
 
-When the shared core passes the corpus on every target, the three engines go
-and the corpus stays as that core's regression suite. If the engines ever need
+I would reopen the shared-core choice if maintaining the three engines costs
+more than another migration attempt. A replacement must pass the corpus on
+every target before the engines retire; no rewrite is currently in flight.
+If the engines ever need
 to diverge on purpose - a platform that cannot show a particular result - that
 difference belongs in the presentation layer, and the corpus keeps asserting
 one answer.

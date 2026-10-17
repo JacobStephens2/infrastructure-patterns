@@ -67,8 +67,17 @@ appearance of the reviewed bytes.
   runner's OAuth refresh credential is owned by one system user; the model
   process runs as another with an allowlisted environment and an ephemeral
   home, obtains a short-lived access token through a root-owned broker under
-  a sudoers rule narrowed to one command, and restricted ptrace scope keeps a
+  narrow sudoers rules for reviewed broker commands; restricted ptrace scope keeps a
   model-spawned shell from reading that token out of the runner's memory.
+
+## Amendment - 2026-10-16
+
+The runner's enrollment source later replaced the single configuration
+source with two required policy layers: the host-wide pinned policy and a
+reviewed per-run authentication layer. The executor verifies both, including
+the staged layer after login. A project directory cannot override either.
+The proof is still keyed to the artifact pin; "exactly one configuration
+source" was an implementation constraint that changed, not the invariant.
 
 ## When I'd revisit
 

@@ -1,12 +1,13 @@
 # ADR 0030 - Immutable per-commit releases with atomic promotion and an append-only journal; re-promotion is a named attended operation; root-pinned authority drift is reported, never a failure
 
-**Status:** Accepted · in production (an internet-facing service promoted automatically on human merge)
+**Status:** Accepted · in production (a personal web application promoted automatically on human merge)
 
 ## Context
 
 [ADR 0004](0004-shell-deploy-over-hosted-ci-runner.md) chose a guarded shell
-deploy. This service raised the bar: a merge to main should reach production
-within a minute without a human at a terminal, every switch must be
+deploy. A separate personal web application raised the bar: a merge to main
+should reach production within a minute without a human at a terminal, every
+switch must be
 verifiable and reversible, and the promotion path must not be able to expand
 root's authority on the host - because the same host runs a model-executing
 subagent under systemd hardening and AppArmor profiles that root pinned on

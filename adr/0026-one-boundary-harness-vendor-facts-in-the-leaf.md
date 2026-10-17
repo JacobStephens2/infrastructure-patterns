@@ -1,6 +1,6 @@
 # ADR 0026 - The agent is a substitutable command: one boundary harness, vendor facts in a leaf
 
-**Status:** Accepted · in production (three vendor leaves; structural properties asserted under each. The third vendor arrived after this was written and was a leaf, not a second copy of the lifecycle)
+**Status:** Accepted · shipped in Tracewake with three tested vendor adapters, two exercised on real tasks; Tracewake superseded in October 2026 by thirdshift
 
 **Source:** [Tracewake](https://github.com/JacobStephens2/tracewake), a public repository. The original record is ADR 0024 under its [`docs/adr/`](https://github.com/JacobStephens2/tracewake/tree/main/docs/adr), beside the code it governs. This is the generalized write-up.
 

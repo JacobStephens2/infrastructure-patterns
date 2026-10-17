@@ -2,7 +2,7 @@
 
 **Status:** Accepted · in production
 
-**Companion code:** [terraform-cloudflare-dns](https://github.com/JacobStephens2/terraform-cloudflare-dns), a public, sanitized mirror of the repository that performed this import.
+**Companion code:** [terraform-cloudflare-dns](https://github.com/JacobStephens2/terraform-cloudflare-dns), a sanitized snapshot of the infrastructure-as-code repository as of June 2026, not a tracking mirror.
 
 ## Context
 

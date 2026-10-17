@@ -1,6 +1,6 @@
 # ADR 0025 - The model credential inside the boundary: a long-lived subscription token injected by environment, over per-iteration renewal or a metered key
 
-**Status:** Accepted · in production (supersedes an eight-hour session file renewed per iteration)
+**Status:** Accepted · ran in production in Tracewake in September 2026; superseded in October 2026 by thirdshift
 
 **Source:** [Tracewake](https://github.com/JacobStephens2/tracewake), a public repository. The original record is ADR 0020 under its [`docs/adr/`](https://github.com/JacobStephens2/tracewake/tree/main/docs/adr), beside the code it governs. This is the generalized write-up.
 

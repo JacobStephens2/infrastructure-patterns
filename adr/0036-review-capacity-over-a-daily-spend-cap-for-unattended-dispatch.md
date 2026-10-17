@@ -1,6 +1,6 @@
 # ADR 0036 - Bound unattended dispatch by human review capacity, over a daily spend cap
 
-**Status:** Accepted · in production (Tracewake, the unattended loop from [ADR 0023](0023-attendedness-is-a-fourth-trust-axis.md), dispatching against a live product's work tracker)
+**Status:** Accepted · ran in production in Tracewake in September 2026; superseded in October 2026 by thirdshift
 
 **Source:** [Tracewake](https://github.com/JacobStephens2/tracewake), a public repository. The original record is ADR 0022 under its [`docs/adr/`](https://github.com/JacobStephens2/tracewake/tree/main/docs/adr), beside the code it governs. This is the generalized write-up.
 
@@ -58,6 +58,18 @@ dispatch by the size of the review queue instead.
 - **The history page stays journal-only.** Live capacity reads the tracker;
   run history never does, so a tracker outage cannot blank the record of what
   the loop already did.
+
+## Amendment - 2026-10-16
+
+The successor kept the capacity principle and changed the counter.
+[thirdshift's Claim limit](https://github.com/JacobStephens2/thirdshift#the-claim-limit)
+counts open claimed issues in each repository, including work started by
+hand, and defaults to 3. The setting is machine-local; the count is per
+repository. At the limit, pickup waits without starting a session.
+
+A second lever is reviewing one feature branch after its tickets finish
+([ADR 0056](0056-a-features-tickets-merge-into-one-branch-so-review-happens-once.md)).
+That changes the review unit rather than only limiting the queue.
 
 ## When I'd revisit
 

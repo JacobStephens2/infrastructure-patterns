@@ -1,6 +1,6 @@
 # ADR 0039 - Preview unreviewed code on the credentialed host, with containment below configuration
 
-**Status:** Accepted · in production (a second instance of Tracewake's web window, serving unmerged branches)
+**Status:** Accepted · ran in production in Tracewake in September 2026; superseded in October 2026 by thirdshift
 
 **Source:** [Tracewake](https://github.com/JacobStephens2/tracewake), a public repository. The original record is ADR 0016 under its [`docs/adr/`](https://github.com/JacobStephens2/tracewake/tree/main/docs/adr), beside the code it governs. This is the generalized write-up.
 

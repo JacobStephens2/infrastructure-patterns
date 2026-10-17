@@ -1,4 +1,4 @@
-# ADR 0011 - A pull-based metrics stack over a bespoke prober, with the data plane kept private
+# ADR 0011 - A pull-based metrics stack alongside a bespoke prober, with the data plane kept private
 
 **Status:** Accepted · in production
 
@@ -13,14 +13,16 @@ database."*
 All three arrived at once. A new revenue-adjacent service needed per-request
 metrics (rate, errors, latency by route), the fleet outgrew "is it up?", and
 "find out by looking at the page" needed to become "get paged." The bespoke
-prober had reached its design limit.
+prober needed history and alerting beside it; it still served liveness and
+operator actions.
 
 The off-the-shelf answer is a metrics stack: Prometheus to scrape and store,
 Grafana to visualize, Alertmanager to route notifications, plus exporters for
-host and black-box signals. Every one of those components ships with **no
-authentication**. On a host without a network firewall, the default
-bind-to-all-interfaces means anyone who finds the port can read every metric you
-collect - and the Alertmanager API lets them *silence or forge* your alerts.
+host and black-box signals. The metrics and alert-control endpoints have
+**no authentication**: Prometheus, Alertmanager, and the exporters need a
+network boundary. Without one, a public listener lets anyone who finds its
+port read metrics - and the Alertmanager API lets them *silence or forge*
+alerts. Grafana has its own login.
 Adopting the stack is half the decision; containing it is the other half.
 
 ## Decision
@@ -28,17 +30,16 @@ Adopting the stack is half the decision; containing it is the other half.
 Adopt the stack, but keep the pull discipline and lock the data plane to
 loopback:
 
-- **Still pull, still agent-free for the apps.** Prometheus scrapes each app's
-  `/metrics` over loopback and a black-box exporter probes public URLs from the
-  one host. The apps gain a `/metrics` endpoint and otherwise own no monitoring
-  code - the property 0007 valued.
-- **Every unauthenticated component binds to `127.0.0.1`.** Prometheus,
-  Alertmanager, node_exporter, and the black-box exporter are loopback-only,
-  reached operationally over an SSH tunnel, never a public port.
-- **Exactly one pane is public, and it is the one with auth.** Grafana sits
-  behind the reverse proxy with TLS, anonymous access limited to **read-only**
-  viewing and editing gated behind a login. It is the only component a browser
-  can reach.
+- **Still pull, still no push agent inside the apps.** Prometheus scrapes
+  metrics endpoints, and a black-box exporter probes public URLs from the
+  monitoring host. Fleet exporters accept scrapes only from that host, pinned
+  by the host firewall. The bespoke prober stays alongside the stack.
+- **The co-located data and control plane binds to `127.0.0.1`.** Prometheus,
+  Alertmanager, and the black-box exporter are reached operationally over an
+  SSH tunnel. Remote exporters use the host-pinned access above.
+- **Exactly one pane is reachable from a browser, behind a login.** Grafana
+  sits behind the reverse proxy with TLS. Its live instance requires a login;
+  the public companion is a baked dashboard image.
 - **The whole thing is configured as code.** Scrape targets, alert rules, the
   datasource, and the dashboards are provisioned from files (see the companion
   [`observability/`](../observability/) module), not clicked together in a UI.
@@ -48,9 +49,9 @@ loopback:
 - **The capabilities 0007 lacked are now present:** per-request metrics with
   history, and alerts that actually notify (a route to email/chat), without a
   push agent inside the apps.
-- **One public surface to defend, and it's read-only.** A leaked dashboard link
-  exposes graphs, not control; the components that *can* be abused aren't
-  reachable from off the host at all.
+- **One authenticated browser surface to defend.** The raw metrics and alert
+  control APIs remain off the public internet. Dashboard links do not bypass
+  the login.
 - **A real operational cost.** There is now a time-series database to run - a
   failure domain 0007 deliberately didn't have - and reaching the raw
   Prometheus/Alertmanager UIs means an SSH tunnel, not a URL. That friction is
@@ -58,6 +59,13 @@ loopback:
 - **The default is a trap, so it's written down.** "Binds to every interface
   with no auth" is not a footnote; on a firewall-less host it is a silent
   exposure. Binding to loopback is the mitigation, not obscurity of the port.
+
+## Amendment - 2026-10-16
+
+The earlier anonymous-read claim was wrong: the live Grafana instance stays
+behind a login. The stack also runs alongside the bespoke prober, rather
+than replacing it. Remote exporters are pinned to the monitoring host; the
+loopback rule applies to the co-located backends and control APIs.
 
 ## When I'd revisit
 

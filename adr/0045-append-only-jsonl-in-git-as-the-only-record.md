@@ -1,6 +1,6 @@
 # ADR 0045 - An append-only JSONL file in git as the only record, over a database with a promised backup
 
-**Status:** Accepted · in production (the sign-off record behind an internal requirements-tracking site read by a five-person project team; reverses a decision made fifteen days earlier)
+**Status:** Accepted · built and in force (the record mechanism behind a five-person project team's requirements site; no live sign-off has been recorded)
 
 ## Context
 
@@ -75,6 +75,15 @@ else. The database is dropped as the store, not demoted to a second copy.
   durability, not tamper-evidence); a database plus a derived JSONL export (two
   representations and a reader who must be told which to trust); one file with
   a type field (the schemas genuinely differ).
+
+## Amendment - 2026-10-16
+
+The mechanism is built and remains the site's record, but it has not carried
+a live sign-off. Its sign-off file holds a test signature and its withdrawal.
+The source decision of 2026-09-02 removed sign-off as a merge condition while
+keeping the append-only record and its meaning intact. This is a deployed
+record mechanism with unused sign-off intake, not evidence that approvers are
+regularly recording signatures.
 
 ## When I'd revisit
 
