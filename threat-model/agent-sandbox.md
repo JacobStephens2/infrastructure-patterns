@@ -19,7 +19,6 @@ Format loosely follows [OWASP Threat Modeling](https://owasp.org/www-community/T
 - LLM provider-side security (their infrastructure, their prompt-injection filters, their training data). Trust boundary sits at the network egress from the container.
 - End-user browser security for the public booking portal - separately modeled.
 - Physical security of the host.
-- Tracewake is included as a historical comparison: it ran in production in September 2026 and was superseded by thirdshift in October. Its execution boundary and credential inventory are documented below; its scheduler, journal, and dashboard are not. Tracewake-specific controls do not describe thirdshift, which is outside this model.
 
 ## 2. Assets
 
@@ -57,8 +56,8 @@ The threats are ordered by likelihood × consequence. Each maps to one or more c
 - **Control:** DB grants are **scoped by user *and* host**. A credential taken out of a container has no reach off that container's host. ([ADR 0009](../adr/0009-default-deny-host-pinned-db-access.md))
 - **Control:** The coordination-host agent has a dedicated system identity and host-bound database credentials. Identity provides attribution; actual authority needs a separate review. ([ADR 0005](../adr/0005-scoped-system-user-over-service-account.md))
 - **Control:** Container isolation caps filesystem + process reach at the sandbox boundary. ([ADR 0001](../adr/0001-docker-over-bare-metal-for-tenant-isolation.md))
-- **Historical Tracewake control:** An unattended iteration ran in a **fresh microVM** with deny-all egress, and the only thing that leaves it is the workspace; push and pull-request creation happen on the host with a token the iteration never held. ([ADR 0023](../adr/0023-attendedness-is-a-fourth-trust-axis.md))
-- **Residual risk:** A write that reaches production still relies on the human approval gate. A social-engineered operator who rubber-stamps the gate is the remaining path. Tracewake also required human review before its proposals merged.
+
+- **Residual risk:** Human review can approve an unsafe change. Database grants and container boundaries must constrain work independently of that review.
 
 ### T2 - Prompt injection via ingested content causes the agent to take an action outside the operator's intent
 **Consequence:** A1, A2, A3, A4.
@@ -73,8 +72,6 @@ The threats are ordered by likelihood × consequence. Each maps to one or more c
 
 - **Control:** Covered consumers receive **runtime-injected** secrets from an encrypted source. The team broker and solo fleet's SOPS + age wrapper share that consumer contract; process output requires separate care. ([ADR 0018](../adr/0018-runtime-injected-secrets-over-plaintext-config.md))
 - **Control:** The observability collector seam explicitly **does not carry prompt content** - only agent usage metrics (token counts, latency, cost). ([ADR 0021](../adr/0021-shared-collector-seam-over-direct-backend-wiring.md))
-- **Historical Tracewake control:** The agent box's credential set was **enumerated and asserted by script** before every dispatch, in both directions - what it must hold, what families it must not - so "what can this box reach?" has an answer that is checked rather than remembered. ([ADR 0024](../adr/0024-asserted-credential-inventory-is-the-isolation-seam.md))
-- **Historical Tracewake control:** The model credential inside the boundary was a long-lived token injected by environment (no credential file crosses), and the host **scans the proposal diff for the token pattern and refuses to push** on a match. ([ADR 0025](../adr/0025-long-lived-model-token-in-the-boundary-over-per-iteration-renewal.md))
 - **Control:** Secret manifests are **per consumer**, so a vault rename fails the consumer that read it and no other; the validator covers every manifest the machine reads, and fails closed on any it cannot check. ([ADR 0028](../adr/0028-per-consumer-secret-manifests-and-validate-every-manifest-read.md))
 - **Control:** User-record audit history **never retains secret values** - who and when remain, values are redacted, and restorable snapshots omit the field. ([ADR 0043](../adr/0043-audit-history-never-retains-secret-values-retroactively.md))
 - **Residual risk:** Anything the agent puts *into* a prompt is out of scope for the provider's data handling. Injected credentials can still be exposed by process output; never-print discipline and coverage require separate review.
@@ -83,9 +80,8 @@ The threats are ordered by likelihood × consequence. Each maps to one or more c
 **Consequence:** A1–A4.
 
 - **Control:** OpenSSF Scorecard on the security-sensitive libraries (`webhook-verify`, `webcrypto-envelope`, `muxboard`) surfaces branch-protection, code-review, and signed-release posture as a public badge. Supply-chain surface is minimized further by the "standard-library + zero deps" preference in these libraries.
-- **Control:** An unsigned or self-updating executable (an IaC provider plugin, a vendor's agent runner) is **pinned by exact artifact and proven against that pin**; drift from the pin pauses work rather than running. The dependency never becomes the interface. ([ADR 0027](../adr/0027-pin-and-prove-unsigned-dependencies-keyed-to-the-pin.md))
-- **Control:** Where the sandbox is layered (systemd hardening, seccomp, AppArmor, Bubblewrap), the confinement is **proved from the live unit**, not from an attended shell that the service could never match. ([ADR 0035](../adr/0035-sandbox-namespaces-under-systemd-hardening-prove-from-the-live-unit.md))
-- **Control:** A merge can never expand root-pinned authority on the agent host: automatic promotion switches immutable releases and **reports** drift from the pinned unit files and profiles; only an attended upgrade applies it. ([ADR 0030](../adr/0030-immutable-releases-atomic-promotion-append-only-journal.md))
+- **Control:** An unsigned DNS provider plugin is **pinned by exact artifact and proven against that pin**; drift from the pin pauses work rather than running. The dependency never becomes the interface. ([ADR 0027](../adr/0027-pin-and-prove-unsigned-dependencies-keyed-to-the-pin.md))
+- **Control:** A merge can never expand root-pinned authority on the separate application host: automatic promotion switches immutable releases and **reports** drift from the pinned unit files and profiles; only an attended upgrade applies it. ([ADR 0030](../adr/0030-immutable-releases-atomic-promotion-append-only-journal.md))
 - **Residual risk:** A compromised LLM provider itself would still exercise every tool the agent is authorized to call. See T2 controls for the human gate.
 
 ### T5 - Public admin console is compromised (credential theft, session hijack, phishing)
@@ -119,9 +115,6 @@ The controls above reduce these but do not eliminate them:
 - **A prompt injection that persuades the agent to stay silent.** Defense-in-depth via multiple review paths (log + gate + observability) rather than any single filter.
 - **A supply-chain compromise upstream of what OpenSSF Scorecard covers** - e.g. a compromised container base image whose vendor was itself compromised. Base-image pinning + SBOM scanning are the compensating controls; both live outside this repo's scope.
 - **A schema migration whose restore path is untested.** Rehearse restores after schema breaks.
-- **Tracewake's historical signing-key trade-off.** Loop commits were signed with a dedicated key registered to the operator, so a compromised box produces *verified* commits in the operator's name. The key's distinct title and mandatory human review before merge are the compensating controls; the badge is documented as meaning "caused," not "typed." ([ADR 0024](../adr/0024-asserted-credential-inventory-is-the-isolation-seam.md))
-- **Tracewake's earlier credential-proxy design.** Under the earlier session-file design, the microVM tool's host proxy took custody of the guest's refreshed OAuth tokens into a host-global store - a second copy of the credential nobody asked for. The long-lived-token design removed the refresh; the lesson is that a sandbox's proxy is part of the credential's blast radius. ([ADR 0025](../adr/0025-long-lived-model-token-in-the-boundary-over-per-iteration-renewal.md))
-- **"Attended" can be lost by accident.** A preview instance left running is an unattended one. Lease, banner, and a runtime cap are what keep the distinction honest. ([ADR 0023](../adr/0023-attendedness-is-a-fourth-trust-axis.md))
 
 ## 6. When I'd revisit
 

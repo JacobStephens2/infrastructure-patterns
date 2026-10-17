@@ -14,15 +14,12 @@ it look like now, and what changed that mattered*.
 ## The environments and their evidence boundaries
 
 - A **Manager Sandbox** is a role-specific instance of the platform running in
-  a Docker container. Managers use separate application containers over shared sandbox data to
-  explore and prototype changes before human-reviewed promotion.
-- **Tracewake** ran unattended coding iterations in fresh microVMs and opened
-  draft pull requests. It ran in production in September 2026 and was
-  superseded by thirdshift in October; its records retain that history.
-- **thirdshift** is the current open-source issue-to-pull-request factory. Its
-  records distinguish review evidence, CI decisions, and repository merge
-  policy from the earlier loop
-  ([0052](../adr/0052-a-fresh-session-second-look-over-a-second-model-family.md),
+  a Docker container. Managers use separate application containers over shared
+  sandbox data to explore and prototype changes before human-reviewed promotion.
+- **thirdshift** is the open-source issue-to-pull-request factory used for
+  engineering work. Its production records cover review evidence, CI decisions,
+  and repository merge policy
+  ([0053](../adr/0053-a-review-finding-carries-a-failing-test-and-a-decline-cites-the-run.md),
   [0054](../adr/0054-merge-the-exact-head-whose-ci-was-watched-over-platform-auto-merge.md)).
 
 ## The system I inherited
@@ -120,17 +117,16 @@ server-side query killer
 ([0057](../adr/0057-a-sandbox-reads-the-primary-not-a-replica-that-can-stall-silently.md)).
 Code promotion goes through pull requests and engineering review.
 
-### 6. What the earlier unattended loop taught
+### 6. Review evidence in the coding workflow
 
-Tracewake treated the loss of "I notice and fix" as the reason to reintroduce
-a per-iteration microVM boundary
-([0023](../adr/0023-attendedness-is-a-fourth-trust-axis.md)). The loop's reach
-was a short, asserted credential inventory
-([0024](../adr/0024-asserted-credential-inventory-is-the-isolation-seam.md)),
-its throughput was bounded by my review queue rather than a spend cap
-([0036](../adr/0036-review-capacity-over-a-daily-spend-cap-for-unattended-dispatch.md)),
-and a task with no test suite still got mechanical backpressure
-([0037](../adr/0037-completeness-check-derives-its-own-denominator.md)).
+thirdshift asks reviewers for runnable evidence, requires a correctness
+finding's test to be run before the author resolves it, and keeps declined
+findings and unread files visible
+([0053](../adr/0053-a-review-finding-carries-a-failing-test-and-a-decline-cites-the-run.md)).
+A feature's tickets meet on one branch before whole-feature review
+([0056](../adr/0056-a-features-tickets-merge-into-one-branch-so-review-happens-once.md)).
+The target repository's merge policy controls whether a ready pull request
+still needs human approval.
 
 ## Measured outcomes
 
@@ -162,7 +158,7 @@ and a task with no test suite still got mechanical backpressure
 
 ## What I got wrong, and what each one changed
 
-Three mistakes, each written up because it was cheap to make and invisible
+Two mistakes, each written up because it was cheap to make and invisible
 afterward.
 
 - **Isolation was inferred from a config file.** A preview tier held a live
@@ -176,12 +172,6 @@ afterward.
   production's volume. Every result was right. The fix is a lint test on query
   shape, because no behavioral test can see a cost that depends on volume
   ([0042](../adr/0042-read-the-union-view-inline-it-for-aggregates-lint-the-shape.md)).
-- **I accepted a trade-off on the strength of a mitigation I then did not
-  build.** A record of approvals lived in one database on one machine, and the
-  backup that made that acceptable never existed. I reversed the decision
-  fifteen days later
-  ([0045](../adr/0045-append-only-jsonl-in-git-as-the-only-record.md)). A
-  mitigation that has not run once is not one.
 
 ## What generalizes
 
@@ -191,8 +181,10 @@ add AI-assisted automation on top, and cannot fund the rewrite, the pattern is:
 
 - sandbox first, and feed the sandbox a snapshot rather than a replica;
 - pin credentials to a host and enumerate them, so reach is a list you can read;
-- decide what changes when nobody is watching, and re-earn only that;
-- bound the agent by human review capacity, because that is the scarce thing;
+- make review findings answer to runnable evidence, and deferred decisions to
+  tracked work;
+- choose a useful review unit, so a feature's tickets do not each require a
+  separate human review;
 - gate changes on evidence a human can accept quickly;
 - prove isolation and mitigations by running them, never by their presence.
 

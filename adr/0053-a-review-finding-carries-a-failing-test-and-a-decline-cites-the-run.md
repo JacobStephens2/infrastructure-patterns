@@ -1,6 +1,6 @@
 # ADR 0053 - A review finding carries a failing test, and a decline cites the run
 
-**Status:** Accepted · in production in thirdshift, the open-source issue-to-pull-request factory that superseded Tracewake (used on my own repositories and the reservations platform's work tracker; evidence rules shipped in October 2026).
+**Status:** Accepted · in production in thirdshift, the open-source issue-to-pull-request factory (used on my own repositories and the reservations platform's work tracker; evidence rules shipped in October 2026).
 
 **Source:** [thirdshift](https://github.com/JacobStephens2/thirdshift), a public repository. The canonical rules live in its [review skill](https://github.com/JacobStephens2/thirdshift/blob/main/skills/thirdshift-code-review/SKILL.md) and [session prompts](https://github.com/JacobStephens2/thirdshift/tree/main/prompts). The motivating figures are in my [published replay study](https://stephens.page/blog/fresh-eyes-beat-a-second-family/paper/).
 
@@ -23,9 +23,7 @@ human or a later issue. Listing a disagreement did not make it someone's work,
 and an author's explanation was not evidence that the reviewer was wrong.
 
 Adding a better reviewer would leave this path intact. A correct finding could
-still be talked away. I needed a rule for how a finding is resolved, alongside
-the choice of where another review might help in
-[ADR 0052](0052-a-fresh-session-second-look-over-a-second-model-family.md).
+still be talked away. I needed a rule for how a finding is resolved.
 
 ## Decision
 
@@ -72,9 +70,9 @@ without turning review into an unbounded retry loop.
   deferred call an owner-visible place. It does not itself block the current
   pull request or guarantee that someone will resolve it.
 - **Coverage has a denominator.** The changed-file list is independent of the
-  reviewer's account of its work. This is the same move as
-  [ADR 0037](0037-completeness-check-derives-its-own-denominator.md): derive
-  what should have been checked, then state what was left out.
+  reviewer's account of its work. Derive what should have been checked, then
+  state what was left out; the reviewer does not get to define completeness
+  from its own report.
 
 ## When I'd revisit
 

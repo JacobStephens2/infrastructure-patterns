@@ -38,16 +38,6 @@ serialization, revisit the separately managed tier of ADR 0002. The deciding
 question is *who owns the state* - one application on one host, or the business -
 not how many rows it is.
 
-**Revisited (2026-08):** the unattended loop's scheduler journal - single
-writer, append-only, scan-to-render, exactly this tier - went to a local
-PostgreSQL instance over the unix socket instead, for the one thing a file
-cannot do: `LISTEN/NOTIFY`, so an insert reaches the operator's dashboard as a
-server-sent push instead of a poll. Peer auth, no network listener, no new
-credential; the rule above still holds because the state still has one owner
-on one host. SQLite was the middle option and lost to both ends: schema
-ceremony without the push. The deciding question gained a clause - *who owns
-the state, and does a write need to wake anything?*
-
 ## Amendment - 2026-10-16
 
 The operations console and its deployment worker now share the local SQLite
@@ -56,6 +46,3 @@ writes, with a bounded busy timeout. One application can have two processes;
 that does not itself require a network database. Their common code and schema
 are part of why they deploy as one release in
 [ADR 0059](0059-two-processes-one-release-refuse-when-they-disagree.md).
-
-The August journal example above is historical: Tracewake was superseded by
-thirdshift in October. The console's SQLite choice remains in production.

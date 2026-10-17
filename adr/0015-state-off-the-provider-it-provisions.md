@@ -1,59 +1,76 @@
 # ADR 0015 - Keep Terraform state off the provider it provisions
 
-**Status:** Accepted · in production
+**Status:** Accepted · in production (the remote state for traffic-serving DNS managed through Terraform)
 
 **Companion code:** [terraform-cloudflare-dns](https://github.com/JacobStephens2/terraform-cloudflare-dns), a sanitized snapshot of the infrastructure-as-code repository as of June 2026, not a tracking mirror.
 
 ## Context
 
-Terraform records what it manages in a state file that has to live somewhere
-durable and lockable. The compute it describes - a droplet, a block volume, the
-DNS in front of them - runs on one cloud provider that also sells an
-S3-compatible object store, so the path of least resistance is a bucket on the
-same account: one vendor, one set of credentials, one bill.
+The state for live DNS belongs outside the provider whose records it manages.
+Terraform uses that state to know which existing objects belong to the
+configuration. Losing access to both the DNS provider and the state during one
+account or provider failure would make recovery harder at the moment the
+record of ownership matters most.
 
-That convenience hides a coupling. State matters most when you need to rebuild,
-and the most total failure is losing the provider itself: a region outage, a
-billing lock, a suspended account. State on that same provider means the one event
-takes out both the infrastructure *and* the record of how to recreate it. Same
-instinct as not storing the only backup on the machine being backed up: recovery
-state should not share a failure domain with the thing it recovers.
+The production workload here is the DNS plane around a personal fleet of
+applications and client sites. Existing records were imported, and changes go
+through the normal plan and apply workflow. The separate compute rebuild
+blueprint has not been applied to production and is not evidence for this
+record.
+
+Keeping the state beside the local checkout would avoid another service, but
+it would leave durability and coordination to that one machine. Storing it on
+a provider already involved in the fleet is convenient, but convenience is not
+an independent failure domain.
 
 ## Decision
 
-Put the state on a *different* provider than the compute it describes.
+Store the production DNS state on AWS S3, separate from Cloudflare, whose DNS
+resources it describes, and DigitalOcean, which hosts the applications.
 
-- **State lives in AWS S3; the compute lives on DigitalOcean.** A DigitalOcean
-  outage or account lock leaves the state fully reachable on AWS, so a rebuild can
-  proceed. The two fail independently.
-- **Locking is S3-native** (`use_lockfile`, conditional writes), so there is no
-  second piece of infrastructure - no DynamoDB table - to stand up just to
-  serialize applies.
-- **Credentials are scoped to the one bucket** (an IAM policy with `ListBucket` +
-  `Get/Put/DeleteObject` on that bucket only), injected from the environment,
-  never committed.
-- **The bucket is versioned**, so a botched `migrate-state` or a bad apply can roll
-  back to a prior state object.
+- **Use the remote backend for the normal workflow.** The source configuration
+  selects S3 for DNS state, and the recorded migration moved the existing
+  state there. This is the running DNS workflow, not a proposed recovery
+  exercise.
+- **Use S3-native locking.** Conditional writes through `use_lockfile` avoid
+  a separate lock-table service while preventing competing applies from
+  treating the same state as exclusively theirs.
+- **Scope credentials to the state bucket.** Supply them through the process
+  environment, with the permissions needed to read, write, list, and manage
+  the state objects. Credentials do not belong in the repository.
+- **Version the bucket.** A bad state migration or apply can be investigated
+  against prior state objects. Keeping an older object is recovery material,
+  not permission to restore it without checking the live infrastructure.
 
 ## Consequences
 
-- **A single-provider failure no longer destroys the means of recovery.** The
-  reason for the whole exercise, bought cheaply.
-- **State is effectively free and the locking is simpler.** A state file is
-  kilobytes - a rounding error on S3 rather than an object-store's monthly floor -
-  and `use_lockfile` removes the DynamoDB table the S3 backend used to need.
-- **A second vendor and a second credential to manage.** Real added surface: an AWS
-  account, an IAM user, a key in CI. The price of independence; the key is
-  read/write to exactly one bucket and nothing else.
-- **The choice generalizes past disaster recovery.** Off-provider state also lets
-  CI run `plan` without trusting the compute provider's account, and keeps the state
-  portable if the compute ever moves clouds.
+- **Provider failures are separated.** A DNS-provider account failure does
+  not also remove the state stored on AWS. A compute-provider failure does
+  not remove it either. Recovery still depends on access to the destination
+  provider and valid credentials; separate vendors do not make recovery
+  automatic.
+- **The local checkout is no longer the state's sole durable home.** A lost
+  workstation does not erase the resource ownership record. Remote locking
+  also gives another authorized operator a coordination mechanism rather
+  than a convention to ask before applying.
+- **A second vendor and credential need maintenance.** The smaller local
+  setup was simpler. I accept the S3 backend, bucket policy, and credential
+  lifecycle because the state supports infrastructure already serving users.
+- **State is not an application backup.** It describes infrastructure
+  ownership. It cannot restore application rows, files, or credentials lost
+  with a host, and a successful state read is not a full restore rehearsal.
+
+## Amendment - 2026-10-16
+
+The earlier example described compute provisioning more broadly than its
+production evidence supported. The verified live example is imported DNS
+with state migrated to S3. The off-provider decision stands on that workload;
+the unapplied compute blueprint is excluded from its production claim.
 
 ## When I'd revisit
 
-If the state describes resources whose own provider you would necessarily be
-recovering *through* anyway - so the independence buys nothing - same-cloud
-storage can win on simplicity. A compliance boundary requiring data, state
-included, to stay within one cloud or region would also override this. Short of
-those, keep the failure domains apart: a few dollars of IAM setup beats
-co-locating the recovery plan with the disaster.
+If policy requires the state and resources to share a provider or region,
+weigh that requirement against the coupled failure. Otherwise keep the state
+outside the provider it governs. A backend change needs its own migration,
+verification against the live resources, and recovery plan before the old
+state location is retired.

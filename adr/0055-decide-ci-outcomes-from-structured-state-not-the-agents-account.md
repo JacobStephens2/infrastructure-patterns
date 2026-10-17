@@ -1,6 +1,6 @@
 # ADR 0055 - Decide CI outcomes from structured state, not the agent's account
 
-**Status:** Accepted · in production in thirdshift, the open-source issue-to-pull-request factory that superseded Tracewake (used on my own repositories and the reservations platform's work tracker).
+**Status:** Accepted · in production in thirdshift, the open-source issue-to-pull-request factory (used on my own repositories and the reservations platform's work tracker).
 
 **Source:** [thirdshift](https://github.com/JacobStephens2/thirdshift), a public repository. The original records are ADR 0008 and ADR 0010 under its [`docs/adr/`](https://github.com/JacobStephens2/thirdshift/tree/main/docs/adr), beside the code they govern.
 
@@ -83,9 +83,7 @@ per head, not an unbounded retry of a failing branch.
   check. The unchanged-head rule buys one chance for a non-repeating failure
   after the repair has already had its opportunity.
 
-The invariant is the same as
-[ADR 0038](0038-guardrail-reads-every-unattended-tree-unknown-is-never-green.md):
-unknown cannot be reported as green after known failure. As in
+Unknown cannot be reported as green after known failure. As in
 [ADR 0027](0027-pin-and-prove-unsigned-dependencies-keyed-to-the-pin.md), the
 external dependency is read through a contract I can check, rather than made
 the interface by copying its explanations.

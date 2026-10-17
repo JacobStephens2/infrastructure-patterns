@@ -92,9 +92,8 @@ and independent observations of production.
   subprocesses and their children during controlled tests, including
   interrupted migrations, repeated interruptions, and disagreeing probes.
   That is not yet evidence of recovery from a real production interruption.
-- **Unknown still blocks.** This shares
-  [ADR 0038](0038-guardrail-reads-every-unattended-tree-unknown-is-never-green.md)'s
-  refusal to turn unreadable evidence green. It also shares
+- **Unknown still blocks.** Unreadable evidence cannot establish eligibility
+  or recovery. This shares
   [ADR 0030](0030-immutable-releases-atomic-promotion-append-only-journal.md)'s
   insistence on naming production after an attempt, while using independent
   probes and a recorded marker rather than that application's promoter.

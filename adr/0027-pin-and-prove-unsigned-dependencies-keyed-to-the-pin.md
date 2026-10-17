@@ -1,88 +1,73 @@
-# ADR 0027 - Enroll an unsigned third-party executable by pinning the exact artifact and keying its acceptance proof to the pin
+# ADR 0027 - Accept an unsigned DNS provider behind an adapter, with proof keyed to the pin
 
-**Status:** Accepted · in production (an unsigned community IaC provider; a self-updating vendor agent runner)
+**Status:** Accepted · in production (the infrastructure provider behind adopted, traffic-serving DNS zones)
 
 ## Context
 
-Two dependencies arrived that could not be verified the normal way and could
-not be avoided:
+An unsigned community DNS provider handles live infrastructure, so its name is
+not enough to trust a replacement artifact. The registry cannot verify its
+signature, no signed alternative exists, and the provider handles some record
+shapes incorrectly. Rejecting it would leave this DNS workflow without a
+provider; accepting arbitrary later versions would discard the evidence that
+made the current one acceptable.
 
-- **A community DNS provider plugin for the IaC tool.** No signed alternative
-  exists; the registry cannot verify its signature; and it handles a few
-  record shapes wrongly.
-- **A vendor's CLI agent runner** used for bounded administrative delegations.
-  It self-updates by default, holds a consumer subscription credential that any
-  process able to read its auth store can spend, runs in an always-approve
-  loop, and the vendor publishes no checksum, signature, or provenance.
-
-"Review it once and trust the name" fails silently in both cases: a plugin
-version bump or a runner self-update replaces the reviewed bytes with the
-appearance of the reviewed bytes.
+The choice is supported by a real adoption path. Existing DNS records are
+imported into declarative ownership, then changes enter through a reviewed
+plan and an operator-confirmed apply. A provider error can affect records
+already serving traffic. The sandbox lifecycle is evidence for that production
+tool, not a claim that the sandbox itself is a production application.
 
 ## Decision
 
-- **Pin the exact artifact.** The provider is pinned to one version with the
-  lockfile's checksums committed. The runner is pinned by reviewed version *and*
-  SHA-256 digest, together with the single configuration source it may read,
-  in a root-managed file; self-update is disabled by policy the runner itself
-  enforces.
-- **Prove the artifact, not the name.** The provider's acceptance is a full
-  record-lifecycle test run in a sandbox zone. The runner's enrollment record
-  is: an attended device authorization, one completed subscription-backed run,
-  a probe that the sandbox reads nothing in the credential-custody boundary,
-  a drill for each named failure ending in the state it must reach, and a stop
-  drill that preserved work.
-- **Key the proof to the pin.** Any change to the provider's source, version,
-  or checksums - or a move to a fork - requires repeating the lifecycle test,
-  and a check enforces that mechanically. Pinning a new runner build discards
-  every proof belonging to the old one; the executor refuses real work until
-  an accepted enrollment exists *for the exact pin installed*. An unreadable or
-  absent record is an absent proof.
-- **Never let the dependency be the interface.** The provider sits behind an
-  adapter that generates every zone file and import from the live inventory
-  and refuses the cases the pinned version handles wrongly, enumerated in its
-  README. The runner sits behind an executor that re-reads the binary's
-  digest, the runner's own self-report, and the pinned configuration before
-  every accepted run, and pauses work on any drift: a self-update, a non-
-  subscription auth route, an available API key, a different model, a changed
-  sandbox profile, an extra configuration source, any plugin or MCP server, or
-  a self-report the contract cannot parse at all.
+Accept the community provider narrowly, behind an adapter, and make the
+acceptance conditional on the exact artifact.
+
+- **Pin the artifact.** Commit the exact provider version and the lockfile's
+  checksums. The accepted source, version, and checksum set are explicit.
+- **Prove the pin with a complete lifecycle.** Exercise create, import,
+  no-change reconciliation, update, and delete against a sandbox zone. Check
+  provider-specific behavior before allowing it to manage a live zone.
+- **Repeat the proof when the artifact changes.** A different source,
+  version, checksum set, or fork reopens acceptance. A check reads the actual
+  lockfile and fails on drift from the accepted artifact. Making it pass
+  again requires repeating the lifecycle and reviewing the new acceptance.
+- **Keep the provider behind an adapter.** Generate zone configuration and
+  imports from live inventory. Reject the cases the pinned provider handles
+  incorrectly, with those cases enumerated beside the adapter. A record the
+  provider cannot represent safely is not silently approximated.
+- **Check the adoption result before taking ownership.** Importing existing
+  records must produce a no-change reconciliation before ordinary applies.
+  This complements [ADR 0014](0014-import-live-dns-over-recreating-it.md):
+  accepting the provider does not justify recreating records that already
+  carry traffic.
 
 ## Consequences
 
-- **A false pause is recoverable by review; a silently dropped boundary is
-  not.** The drift check is deliberately unforgiving because it is cheap and
-  because every boundary below it is stated in the configuration it validates.
-- **The digest attests less than it looks like.** With no vendor provenance, a
-  digest proves the runner has not changed since it was reviewed on this host
-  and nothing about the download. Two independent fetch routes producing
-  byte-identical binaries is the strongest corroboration available, and that is
-  stated rather than implied.
-- **Design against documentation, then correct against contact.** Half the
-  runner's drift fields, read from a research note, had no counterpart in the
-  binary's actual self-report. Enrollment is where field names get confirmed
-  against the pinned artifact; a renamed field pauses work instead of dropping
-  a boundary.
-- **Separate identities for credential custody and model execution.** The
-  runner's OAuth refresh credential is owned by one system user; the model
-  process runs as another with an allowlisted environment and an ephemeral
-  home, obtains a short-lived access token through a root-owned broker under
-  narrow sudoers rules for reviewed broker commands; restricted ptrace scope keeps a
-  model-spawned shell from reading that token out of the runner's memory.
+- **A digest is a pin, not provenance.** It establishes that the reviewed
+  artifact has not changed. It does not establish who built it or repair the
+  missing signature. That supply-chain cost remains part of accepting the
+  provider.
+- **Acceptance is more work than initialization.** The lifecycle proof must
+  be maintained and repeated for an upgrade. A successful download or a
+  passing configuration validation is weaker evidence than a provider that
+  actually imports, changes, and removes its own records correctly.
+- **Provider quirks stay in one place.** The adapter gives callers a checked
+  interface rather than requiring every operator to remember the pinned
+  version's exceptions. Maintaining those exceptions is an ongoing cost.
+- **False refusals are cheaper than silent changes.** A checksum change can
+  block work until reviewed. That is recoverable; silently accepting a new
+  implementation against traffic-serving DNS is not an equivalent risk.
 
 ## Amendment - 2026-10-16
 
-The runner's enrollment source later replaced the single configuration
-source with two required policy layers: the host-wide pinned policy and a
-reviewed per-run authentication layer. The executor verifies both, including
-the staged layer after login. A project directory cannot override either.
-The proof is still keyed to the artifact pin; "exactly one configuration
-source" was an implementation constraint that changed, not the invariant.
+This record previously combined the live DNS provider with an experimental
+agent runner. The runner example is withdrawn under the collection's
+production-only scope. The decision retained here is exercised by the DNS
+operating tool; its acceptance lifecycle and adapter remain the evidence.
 
 ## When I'd revisit
 
-The day either vendor publishes signed releases, the pin stays and the
-lifecycle proof shrinks to "signature verifies plus the adapter's own tests."
-If a pinned artifact's known-wrong cases grow past what an adapter can refuse
-cleanly, that is the signal to fork or replace it, with the same proof
-repeated against the replacement.
+If a signed provider becomes available, provenance can improve while the
+artifact pin and lifecycle proof remain useful. If exceptions grow beyond
+what the adapter can refuse clearly, replace or fork the provider and repeat
+the same acceptance before it manages live records.

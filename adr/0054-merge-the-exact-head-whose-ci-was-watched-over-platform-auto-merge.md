@@ -1,6 +1,6 @@
 # ADR 0054 - Merge the exact head whose CI was watched, over platform auto-merge
 
-**Status:** Accepted · in production in thirdshift, the open-source issue-to-pull-request factory that superseded Tracewake (used on my own repositories and the reservations platform's work tracker; the self-merge history below is thirdshift's own public repository).
+**Status:** Accepted · in production in thirdshift, the open-source issue-to-pull-request factory (used on my own repositories and the reservations platform's work tracker; the self-merge history below is thirdshift's own public repository).
 
 **Source:** [thirdshift](https://github.com/JacobStephens2/thirdshift), a public repository. The original record is ADR 0004 under its [`docs/adr/`](https://github.com/JacobStephens2/thirdshift/tree/main/docs/adr), beside the code it governs.
 
@@ -16,9 +16,8 @@ its checks fail. A Merge run asks that same loop to finish by merging the pull
 request. The authoring agent proposes code and addresses review findings; the
 tool decides whether delivery may proceed from structured repository state.
 
-That is a change from Tracewake's proposal-only output in
-[ADR 0023](0023-attendedness-is-a-fourth-trust-axis.md). The change has a
-specific evidence boundary. My [published study](https://stephens.page/blog/fresh-eyes-beat-a-second-family/paper/)
+The self-merge history has a specific evidence boundary. My
+[published study](https://stephens.page/blog/fresh-eyes-beat-a-second-family/paper/)
 reports that no human had read a thirdshift pull request before it merged
 since late September 2026. That statement concerns thirdshift's own repository,
 not every repository where the tool runs. A target repository's review policy

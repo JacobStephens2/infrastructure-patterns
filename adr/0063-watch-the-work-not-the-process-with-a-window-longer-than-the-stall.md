@@ -43,9 +43,8 @@ checks remain; they answer a different question.
   when the write happened.
 - **Missing evidence is a problem.** A missing or unreadable checkpoint raises
   an alert. An inspection error also becomes a problem rather than an empty
-  result interpreted as no outstanding work. This is the same boundary as
-  [ADR 0038](0038-guardrail-reads-every-unattended-tree-unknown-is-never-green.md):
-  unknown must not become green.
+  result interpreted as no outstanding work. Unknown must not become green
+  merely because an inspection returned no usable evidence.
 - **Persist a restart position as well as a liveness marker.** The consumer
   saves a binlog position at a completed transaction boundary. It resumes a
   checkpoint under 7 days old, inside the source's 14 days of log retention.

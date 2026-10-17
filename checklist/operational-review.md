@@ -29,10 +29,6 @@ The ADRs in [`../adr/`](../adr/) explain *why* each pattern exists. This checkli
 - [ ] **What is the smallest possible action that can take the business offline for a day?**
   If you can't name it in one sentence, you don't yet know your blast radius.
 
-- [ ] **Can you list every credential on the agent box, and does a script assert the list?**
-  Ideally: a short inventory, asserted before every dispatch in both directions (must hold / must not hold). "Three, plus one nobody mentions" is the finding.
-  → [ADR 0024 asserted credential inventory](../adr/0024-asserted-credential-inventory-is-the-isolation-seam.md)
-
 - [ ] **If one vault item is renamed, which processes die?**
   Ideally: only the ones that read it. A shared whole-or-nothing manifest that takes down unrelated units is the finding.
   → [ADR 0028 per-consumer manifests](../adr/0028-per-consumer-secret-manifests-and-validate-every-manifest-read.md)
@@ -128,10 +124,6 @@ The ADRs in [`../adr/`](../adr/) explain *why* each pattern exists. This checkli
   Ideally: named, auditable, and testable - even if it's a shell script rather than a hosted CI runner.
   → [ADR 0004 guarded shell deploy](../adr/0004-shell-deploy-over-hosted-ci-runner.md)
 
-- [ ] **Are hosts provisioned declaratively, and can I rebuild any of them from Git?**
-  Ideally: yes. If a critical host has drift no one can explain, that's the finding.
-  → [ADR 0013 staged declarative provisioning](../adr/0013-staged-declarative-provisioning-over-imperative-bootstrap.md)
-
 - [ ] **Is Terraform (or equivalent) state stored on the *same* provider it provisions?**
   Ideally: no. A provider outage that destroys both compute and state is a bad day compounded.
   → [ADR 0015 state off the provider](../adr/0015-state-off-the-provider-it-provisions.md)
@@ -175,7 +167,7 @@ The ADRs in [`../adr/`](../adr/) explain *why* each pattern exists. This checkli
 
 - [ ] **What enforces each boundary on the agent's actions, and how was it proved?**
   Ideally: name the enforcing layer and run a negative test from the live service context. A tool list or a configuration file alone is not evidence of containment.
-  → [ADR 0035 proof from the live unit](../adr/0035-sandbox-namespaces-under-systemd-hardening-prove-from-the-live-unit.md), [ADR 0046 containment proof](../adr/0046-preview-containment-in-the-application-proved-by-egress-test.md)
+  → [ADR 0046 containment proof](../adr/0046-preview-containment-in-the-application-proved-by-egress-test.md)
 
 - [ ] **Is retrieved / ingested content treated as untrusted?**
   Ideally: the trust boundary remains explicit when email, web pages, or uploaded documents enter context. Test an injected instruction against the action boundary; a text filter alone cannot establish it.
@@ -186,21 +178,9 @@ The ADRs in [`../adr/`](../adr/) explain *why* each pattern exists. This checkli
 - [ ] **Are agent usage metrics captured (cost, latency, error rate) and reviewed?**
   Ideally: yes; the collector seam makes this a one-shot integration.
 
-- [ ] **When nobody is watching the agent, is it inside a boundary that dies with the iteration?**
-  Ideally: yes - fresh microVM per iteration, deny-all egress, workspace is the only thing that comes out, push happens on the host with a token the iteration never held. "It's fine, I'll notice" is the finding for anything unattended.
-  → [ADR 0023 attendedness](../adr/0023-attendedness-is-a-fourth-trust-axis.md)
-
-- [ ] **Is the agent runner pinned by digest and proven against that pin before it does real work?**
-  Ideally: yes; a self-update or a changed sandbox profile pauses work rather than running.
+- [ ] **Is an unsigned infrastructure provider pinned and its proof tied to that artifact?**
+  Ideally: a changed version or checksum requires repeating its acceptance lifecycle before the provider can change live infrastructure.
   → [ADR 0027 pin and prove](../adr/0027-pin-and-prove-unsigned-dependencies-keyed-to-the-pin.md)
-
-- [ ] **Were the sandbox proofs run from the live service unit, or from someone's shell?**
-  Ideally: from the unit, under its own systemd/seccomp/AppArmor restrictions. A green proof from a shell certifies nothing about the service.
-  → [ADR 0035 prove from the live unit](../adr/0035-sandbox-namespaces-under-systemd-hardening-prove-from-the-live-unit.md)
-
-- [ ] **Could an agent commit its own model token, and would the push refuse?**
-  Ideally: the host scans the diff for the token pattern before pushing and fails the proposal on a match.
-  → [ADR 0025 model token in the boundary](../adr/0025-long-lived-model-token-in-the-boundary-over-per-iteration-renewal.md)
 
 ## 9. Supply chain
 

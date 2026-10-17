@@ -85,9 +85,7 @@ have repaired that disagreement.
   another check. A successful local test run cannot certify that future
   state.
 
-[ADR 0038](0038-guardrail-reads-every-unattended-tree-unknown-is-never-green.md)
-required a guardrail to cover every tree that executes. This is the same
-coverage rule across the enforcement path: a correct script says nothing
+The coverage rule spans the enforcement path: a correct script says nothing
 about a workflow that suppresses it or a ruleset that does not require it.
 
 ## When I'd revisit

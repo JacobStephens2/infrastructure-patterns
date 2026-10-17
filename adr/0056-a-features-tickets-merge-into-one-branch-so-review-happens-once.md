@@ -1,6 +1,6 @@
 # ADR 0056 - A feature's tickets merge into one branch so review happens once
 
-**Status:** Accepted · in production (thirdshift, the open-source issue-to-pull-request factory that superseded Tracewake; feature runs on my own repositories)
+**Status:** Accepted · in production (thirdshift, the open-source issue-to-pull-request factory; feature runs on my own repositories)
 
 **Source:** [thirdshift](https://github.com/JacobStephens2/thirdshift), a public repository. The original record is ADR 0006 under its [`docs/adr/`](https://github.com/JacobStephens2/thirdshift/tree/main/docs/adr), beside the code it governs.
 
@@ -12,10 +12,9 @@ wait for me after every merge. Merging each ticket straight to the main
 branch removes that wait and leaves a half-built feature there when the next
 ticket fails.
 
-[ADR 0036](0036-review-capacity-over-a-daily-spend-cap-for-unattended-dispatch.md)
-bounded dispatch by review capacity. This is the other lever: change what
-one review covers. The units still matter. A ticket is a bounded piece of
-work; a feature is the behavior those pieces must produce together. Passing
+Review capacity is limited. Change what one review covers. The units still
+matter. A ticket is a bounded piece of work; a feature is the behavior those
+pieces must produce together. Passing
 each ticket's review does not prove the pieces agree at their seams.
 
 The implementation needed concurrency without turning the orchestration

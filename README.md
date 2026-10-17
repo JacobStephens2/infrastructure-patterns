@@ -4,14 +4,13 @@ The curated home for my best Architecture Decision Records, from every system
 I run in production - private and public - written so the *reasoning* is
 visible even where the code cannot be.
 
-Every record here comes from a system that reached real use. Records stay when
-a system is superseded; their status lines distinguish current deployments,
-historical decisions, and changes shipped without a new measurement. Each
-record states what I chose, what I gave up, and when I would choose differently.
-Where a decision came out of an incident or a measurement, the number is in
-the record: a dashboard query that went from 1,441 seconds to 0.196, a
-six-hour outage behind a validator that printed green, a ticket whose count of
-276 had become 303 by the time an agent picked it up.
+Only decisions exercised in production applications or their operating tools
+belong here. A deployed prototype, an acceptance trial, or a proposed mechanism
+does not qualify. Each record states where the decision is used, what I chose,
+what I gave up, and when I would choose differently. Measurements keep their
+proof boundaries: a dashboard query from 1,441 seconds to 0.196, a six-hour
+outage behind a validator that printed green, or a session lock whose fix has
+shipped without a production re-measurement.
 
 Records come from two kinds of source, and each says which it is.
 
@@ -28,39 +27,38 @@ Records come from two kinds of source, and each says which it is.
 | System | Who uses it | Main records |
 |---|---|---|
 | **A reservations and operations platform** for a group-travel operator: a PHP 8.4 / MySQL 8.4 core modernized in production from PHP 5 / MySQL 5, four portals on one schema. I am its lead engineer. Private. | Office staff daily; tour guides in the field through an offline-capable portal | 0002, 0004, 0006, 0034, 0042-0044, 0058, 0061-0063 |
-| **The fleet platform around it**: guarded deploys, an operator console, secrets, observability across the hosts, and Docker-based Manager Sandboxes where non-technical managers work with an AI assistant on a copy of production data. Private. | Me, the engineers I work with, and the managers who own a sandbox | 0001, 0003, 0005, 0007-0009, 0011, 0018-0022, 0028, 0029, 0032, 0033, 0040, 0041, 0057-0060 |
-| **[Tracewake](https://github.com/JacobStephens2/tracewake)**, an unattended coding loop with a fresh microVM per iteration and proposal-only output. Public, archived; superseded by thirdshift in October 2026. | Me, dispatching against a live work tracker in September 2026 | 0023-0026, 0036-0039 |
-| **[thirdshift](https://github.com/JacobStephens2/thirdshift)**, the current open-source issue-to-pull-request factory, with review and repair sessions around deterministic CI and merge decisions. | Me, on my own repositories and the reservations platform's work tracker | 0052-0056 |
-| **A project team's planning surfaces**: requirements, sign-off records, generated status pages, and the CI that checks them. Private. | A five-person project team | 0045-0047, 0065 |
+| **The fleet platform around it**: guarded deploys, an operator console, secrets, observability across the hosts, and Docker-based Manager Sandboxes where non-technical managers work with an AI assistant on a copy of production data. Private. | Me, the engineers I work with, and the managers who own a sandbox | 0001, 0003, 0005, 0007-0009, 0011, 0018-0022, 0027-0029, 0032, 0033, 0040, 0041, 0057-0060 |
+| **[thirdshift](https://github.com/JacobStephens2/thirdshift)**, the current open-source issue-to-pull-request factory, with review and repair sessions around deterministic CI and merge decisions. | Me, on my own repositories and the reservations platform's work tracker | 0053-0056 |
+| **A project team's planning surfaces**: requirements, review previews, generated status pages, and the CI that checks them. Private. | A five-person project team | 0046, 0047, 0065 |
 | **[vaulted-agent](https://github.com/JacobStephens2/vaulted-agent)**: a Rust launcher that resolves per-agent secret manifests into a child process's environment. Public, released. | The fleet above, and anyone who installs it | 0028, 0048 |
 | **A paid, privacy-sensitive charting app** on the web, the App Store, and the Play Store, with end-to-end encrypted sync and subscription billing ([architecture slice](https://github.com/JacobStephens2/chart35-showcase)). | Customers on the web, iOS, and Android | 0049, 0050, 0064 |
 | **Two copy-deployed sync services**, one for a weightlifting tracker and one for a game. | Users of each app, with separate backends | 0012 |
-| **My own fleet**: one VPS serving about 70 hostnames for my products and client sites, with DNS as code across 9 zones ([sanitized mirror](https://github.com/JacobStephens2/terraform-cloudflare-dns)). | Me and my clients | 0014, 0015, 0017, 0027, 0030, 0031 |
+| **My own fleet**: one VPS serving about 70 hostnames for my products and client sites, with DNS as code across 9 zones ([sanitized mirror](https://github.com/JacobStephens2/terraform-cloudflare-dns)). | Me and my clients | 0014, 0015, 0017, 0030, 0031 |
 | **[A small multiplayer word game](https://github.com/JacobStephens2/thereish)** with an LLM grading every attempt live. | A handful of players | 0051 |
 
 ## Evidence boundary
 
-The status lines distinguish three environments and their proof boundaries.
+Production means a running application or an operating tool used for real
+work. Running a trial on a production host or against a real codebase does
+not establish that status. Prototypes and unused mechanisms are excluded.
 
 - A **Manager Sandbox** gives a manager and an AI assistant separate application
   files and processes over a shared writable dataset, refreshed nightly.
   Per-manager credentials attribute access; they do not separate the data.
   Code promotion requires engineering review. A separate SELECT-only path reads
   production under server-enforced limits.
-- **Tracewake** ran in production in September 2026 and was superseded in
-  October. Its microVM and credential-inventory records preserve the earlier
-  decisions and say where the successor differs.
-- **thirdshift** is the current factory. Its records cover the evidence a
+- **thirdshift** is used to deliver code. Its records cover the evidence a
   reviewer supplies, the commit whose checks were watched, and a feature's
-  review boundary. Each record states the scope its sources support.
+  review boundary. Deployed behavior and measured outcomes remain separate
+  claims; the status line says what the evidence establishes.
 
 ## Start here
 
 Eight records that show the range, if you only read a few.
 
-- [0052](adr/0052-a-fresh-session-second-look-over-a-second-model-family.md) -
-  **Put the second look where it earns its cost.** A published replay study
-  supports a proposed second look after feature review; it is not yet built.
+- [0053](adr/0053-a-review-finding-carries-a-failing-test-and-a-decline-cites-the-run.md) -
+  **A decline needs evidence.** Correctness findings carry a test the author
+  must run, and a declined finding cites the result or a tracked decision.
 - [0056](adr/0056-a-features-tickets-merge-into-one-branch-so-review-happens-once.md) -
   **Review the feature once.** Ticket work meets on one branch so the human
   review queue counts features rather than implementation steps.
@@ -86,18 +84,18 @@ Eight records that show the range, if you only read a few.
 
 ## Decision records
 
-All 64 records, grouped by the problem they belong to. Numbers are
-chronological and never reused, so a gap is a record that was withdrawn. A
-partial web mirror is at
+All 52 records, grouped by the problem they belong to. Numbers are
+chronological and never reused, so gaps include withdrawn records. Their
+history stays in git. A partial web mirror is at
 [stephens.page/decisions](https://stephens.page/decisions/); this repository is
 current, and the mirror needs regeneration after updates.
 
 ### Running AI agents against production systems
 
-Isolation, identity, and credentials first (0001-0010), then Tracewake's
-unattended loop (0023-0026, 0036-0039), live sandbox proofs (0035), and
-fleet instruction and workflow design (0040-0041), and thirdshift's review machinery (0052-0056). The primary-read
-record (0057) revisits the sandbox's data boundary.
+Sandbox isolation, identity, and credentials (0001-0010), production workflow
+and instruction design (0040-0041), and thirdshift's review and delivery
+machinery (0053-0056). The primary-read record (0057) revisits the sandbox's
+data boundary.
 
 | # | Decision | Trade-off in one line |
 |---|----------|------------------------|
@@ -106,18 +104,8 @@ record (0057) revisits the sandbox's data boundary.
 | [0005](adr/0005-scoped-system-user-over-service-account.md) | A scoped system user over a shared service account for an autonomous agent | More host setup for per-identity attribution, with database grants and container boundaries reviewed separately |
 | [0009](adr/0009-default-deny-host-pinned-db-access.md) | Default-deny, host-pinned DB access over a trusted network | Take on provisioning friction so a leaked credential isn't portable off its host |
 | [0010](adr/0010-pixel-equality-gate-over-diff-review-for-generated-markup.md) | A pixel-equality gate over diff review for changes to generated markup | Pay a render/diff harness to safely change markup you can't audit by eye - it proves visual, not semantic, equality |
-| [0023](adr/0023-attendedness-is-a-fourth-trust-axis.md) | Attendedness is a fourth trust axis: a per-iteration microVM boundary for unattended agents, even at single-operator scale | Re-earn exactly one subsystem - the execution boundary - because "I notice and fix" is the premise that lets solo-scale isolation collapse, and an unattended run is defined by nobody noticing; everything else in the heavy factory stays deleted |
-| [0024](adr/0024-asserted-credential-inventory-is-the-isolation-seam.md) | A short, script-asserted credential inventory on the agent box; the inventory, not the network hop, is the isolation seam | Three base credentials plus one repo token per target, asserted in both directions before every dispatch - so the box's reach is enumerable, single-host mode is gated on passing the same check, and every "just add a mail credential" reopens the two lists whose value is being short |
-| [0025](adr/0025-long-lived-model-token-in-the-boundary-over-per-iteration-renewal.md) | The model credential inside the boundary: a long-lived subscription token by environment, over per-iteration renewal or a metered key | Keep the flat-rate cost control and give up proxy-injected isolation - bounded instead by deny-all egress, a sandbox that dies per iteration, a token that revokes alone, and a diff scan that refuses to push the token pattern |
-| [0026](adr/0026-one-boundary-harness-vendor-facts-in-the-leaf.md) | The agent is a substitutable command: one boundary harness, vendor facts in a leaf | Pay a harness/leaf split and double-asserted structural tests so the loop is a claim about a technique rather than a vendor, and a third agent is a leaf, not a second copy of the lifecycle |
-| [0035](adr/0035-sandbox-namespaces-under-systemd-hardening-prove-from-the-live-unit.md) | Let the hardened service create namespaces so the sandbox can confine the model; hold the boundary in AppArmor; prove from the live unit | Loosen one systemd restriction that no narrower setting can express, keep the kernel and profile layers that make it safe, and never again certify a sandbox from an attended shell that the service could not start |
-| [0036](adr/0036-review-capacity-over-a-daily-spend-cap-for-unattended-dispatch.md) | Bound unattended dispatch by human review capacity, over a daily spend cap | Give up a hard spend ceiling (the subscription already is one) so throughput tracks the scarce thing - review - and headroom returns the moment a proposal is merged instead of when a 24-hour window rolls |
-| [0037](adr/0037-completeness-check-derives-its-own-denominator.md) | An agent's completeness check derives its own denominator and declares what it left out | Pay for a generic checker so a task with no test suite still has backpressure - after the ticket's own count (276) had drifted to 303 by the time the agent picked it up, which a check against the ticket would have passed |
-| [0038](adr/0038-guardrail-reads-every-unattended-tree-unknown-is-never-green.md) | The guardrail reads every tree that runs unattended, and unknown is never green | Take on a declared list of trees so an unreviewed commit in the instance's config repo cannot hide behind a green chip for the product repo - and journal a reading on idle cycles so silence only ever means the loop stopped |
-| [0039](adr/0039-containment-below-configuration-for-previewing-unreviewed-code.md) | Preview unreviewed code on the credentialed host, with containment below configuration | Allow a branch to render where production credentials live because someone is watching it - and make the database grant, not the connection string, the control, since the previewed code is exactly the code that might ignore its config |
 | [0040](adr/0040-serial-subagent-rounds-over-detached-parallel-processes.md) | Serial rounds run as harness subagents, over detached parallel CLI processes | Give up throughput and process survival - parallelism saved about ten minutes and cost a merge round, a re-gate, and a second correction - to delete a process-management layer that once resumed the wrong session |
 | [0041](adr/0041-one-primary-agent-file-byte-identical-shared-layer-per-host-facts.md) | One primary agent instruction file, a byte-identical shared layer, and per-host environment facts beside it | Add a pointer and a checksum check so every harness, not just one vendor's, is told what a host can touch - after five 'generic' instruction files turned out to have drifted into five versions |
-| [0052](adr/0052-a-fresh-session-second-look-over-a-second-model-family.md) | A fresh-session second look over a second model family | Decline an extra model family inside each Run; the feature-level second look remains proposed |
 | [0053](adr/0053-a-review-finding-carries-a-failing-test-and-a-decline-cites-the-run.md) | A review finding carries a failing test; a decline cites the run | Spend reviewer effort on runnable evidence and declared coverage so declines can be checked |
 | [0054](adr/0054-merge-the-exact-head-whose-ci-was-watched-over-platform-auto-merge.md) | Merge the exact head whose CI was watched | Keep merge authority inside the repair loop, and stop when repository review policy refuses |
 | [0055](adr/0055-decide-ci-outcomes-from-structured-state-not-the-agents-account.md) | Decide CI outcomes from structured state | Match failures against the base and grant one unchanged-head re-run, without interpreting agent prose |
@@ -135,7 +123,7 @@ record (0057) revisits the sandbox's data boundary.
 | [0034](adr/0034-root-allowlist-with-404-over-blocklist-with-403-for-a-legacy-webroot.md) | A strict root allowlist returning 404 over a growing blocklist returning 403, for a legacy repository-as-webroot | Fail closed against files nobody anticipated and stop confirming their existence to scanners, without the multi-quarter refactor of moving the document root - which the allowlist now guards |
 | [0043](adr/0043-audit-history-never-retains-secret-values-retroactively.md) | Audit history never retains secret values, and existing history is migrated to match | Deliberately destroy the recoverability of old credential values, because an audit trail is not a credential store - history keeps who and when, redacts diffs, and omits the field from anything restorable |
 | [0044](adr/0044-additive-fail-closed-section-permissions.md) | Section permissions are additive on top of page permissions and fail closed | Make granting more verbose so a hand-built request cannot mutate a section its author cannot view, and a misconfiguration fails as 'cannot see it' rather than 'can' |
-| [0027](adr/0027-pin-and-prove-unsigned-dependencies-keyed-to-the-pin.md) | Enroll an unsigned third-party executable by pinning the exact artifact and keying its acceptance proof to the pin | Accept an unsignable IaC provider and a self-updating agent runner by pinning bytes, proving the pin with a real lifecycle, refusing work until the proof matches the installed pin, and never letting the dependency be the interface - a false pause is recoverable, a silently dropped boundary is not |
+| [0027](adr/0027-pin-and-prove-unsigned-dependencies-keyed-to-the-pin.md) | Accept an unsigned DNS provider behind an adapter, with proof keyed to the pin | Pin the artifact and repeat its DNS lifecycle proof when it changes; keep provider quirks inside a checked adapter |
 | [0017](adr/0017-self-hosted-signing-instrument-over-saas.md) | Self-host the signing instrument and its audit trail over a SaaS signature service | Take on one container plus its own cert and upkeep so the legally-binding document and its audit trail stay on infra you govern, with a named-human gate on every consequential action - the highest-stakes case of keeping the authoritative copy where you control it |
 
 ### Deploy, release, and provisioning
@@ -148,7 +136,6 @@ record (0057) revisits the sandbox's data boundary.
 | [0031](adr/0031-ci-deploy-key-restricted-to-one-forced-command-over-host-pull.md) | A CI deploy key that reaches a shared host, restricted to one installed forced command, over having the host pull | Let a CI secret reach a host that serves client work because it cannot open a shell - forced command outside the deployed tree, pinned host key - in exchange for sub-minute deploys without a listener or a timer |
 | [0046](adr/0046-preview-containment-in-the-application-proved-by-egress-test.md) | Preview containment lives in the application, and isolation is proved by an egress test rather than inferred from a config file | Route outbound effects into inspectable sinks, and refuse to call a slot contained until an egress test passes - after a per-slot override file turned out to be present, well-formed, and never read |
 | [0048](adr/0048-static-musl-release-binaries-with-a-ci-guard.md) | Ship static musl release binaries with a CI guard, over glibc builds from whatever the runner has | Give up in-process NSS lookups to remove the glibc floor entirely - after a CI image bump put a non-weak `GLIBC_2.39` reference in a binary that called nothing from 2.39 and broke every stable server distro |
-| [0013](adr/0013-staged-declarative-provisioning-over-imperative-bootstrap.md) | Staged declarative provisioning (Terraform + cloud-init + separate deploy) over one imperative bootstrap script | Take on Terraform state and a deliberately create-only provisioning token for a single box to get a reproducible, reviewable host and a clean provision/configure/deploy seam |
 | [0014](adr/0014-import-live-dns-over-recreating-it.md) | Import ~220 live DNS records into Terraform over recreating them from a desired-state list | Accept verbose generated config and provider quirks to adopt traffic-serving records with zero downtime and a no-op baseline plan, instead of risking duplicate-creates and silent deletion of forgotten records |
 | [0015](adr/0015-state-off-the-provider-it-provisions.md) | Keep Terraform state on a different provider than the compute it provisions | Take on a second vendor + scoped IAM key so a provider-level outage can't destroy both the infrastructure and the state needed to rebuild it |
 | [0058](adr/0058-the-hosted-runner-asks-and-the-host-decides.md) | The hosted runner asks and the host decides | Use short-lived OIDC requests while the host rechecks identity, the commit, CI, and live state |
@@ -164,7 +151,6 @@ record (0057) revisits the sandbox's data boundary.
 | [0006](adr/0006-binlog-daemons-over-database-triggers.md) | Binlog-tailing daemons over database triggers for denormalization | Accept eventual consistency to keep derive-logic in versioned code, off the hot write path |
 | [0008](adr/0008-embedded-sqlite-over-networked-db-for-tooling.md) | Embedded SQLite over a networked DB for single-node tooling | Give up cross-host sharing for zero operational surface on state one process owns |
 | [0042](adr/0042-read-the-union-view-inline-it-for-aggregates-lint-the-shape.md) | Read the reconciling view by default, inline the union for aggregates, and lint the shape of the restriction | Accept two ways to read one dataset, guarded by a lint test, because MySQL cannot push a non-constant predicate through a UNION - eleven dashboard queries at 493 to 1,441 seconds, the worst to 0.196 once inlined |
-| [0045](adr/0045-append-only-jsonl-in-git-as-the-only-record.md) | An append-only JSONL file in git as the only record, over a database with a promised backup | Reverse a fifteen-day-old decision after finding its promised backup was never built - trade a seconds-long single-machine window for tamper-evidence that comes from the shape of the file, with a generator that publishes before it fails |
 | [0047](adr/0047-scripts-hide-rows-and-derive-no-figures.md) | On a generated status site, scripts hide rows and derive no figures | Cost readers a filter-scoped distribution so every number has exactly one definition - enforced as a property of the rendered output, with the check's three blind spots written down beside it |
 | [0012](adr/0012-copy-deployed-sync-services-over-shared-multi-tenant-backend.md) | Per-app copy-deployed sync services over a shared multi-tenant backend | Run N near-identical small services to gain physical blast-radius isolation and per-app sync-model freedom, at the cost of hand-applying shared-auth fixes across copies |
 | [0049](adr/0049-expand-contract-entitlements-old-endpoint-kept-reads-fail-open.md) | A closed, provider-independent entitlement state, migrated expand-then-contract, with the old endpoint kept indefinitely and reads failing open | Carry a permanent compatibility endpoint because released desktop builds embed old JavaScript, leave ambiguous legacy rows `unclassified` rather than guess, and give away uploads during my own outage rather than lock out a paying customer |
@@ -190,15 +176,13 @@ record (0057) revisits the sandbox's data boundary.
 
 - [`observability/`](observability/) - the sanitized Prometheus and
   Alertmanager configuration and Grafana dashboards behind ADR 0011.
-- [Tracewake](https://github.com/JacobStephens2/tracewake) - the unattended
-  coding loop behind ADRs 0023-0026 and 0036-0039, now archived and superseded.
 - [thirdshift](https://github.com/JacobStephens2/thirdshift) - the current
-  issue-to-pull-request factory behind ADRs 0052-0056.
+  issue-to-pull-request factory behind ADRs 0053-0056.
 - [vaulted-agent](https://github.com/JacobStephens2/vaulted-agent) - the
   runtime-secrets launcher behind ADRs 0018, 0028, and 0048.
 - [terraform-cloudflare-dns](https://github.com/JacobStephens2/terraform-cloudflare-dns) -
   a sanitized June 2026 snapshot of the Terraform, Cloudflare, and Ansible
-  DNS-as-code setup behind ADRs 0013-0015.
+  DNS-as-code setup behind ADRs 0014-0015.
 
 ## Companion artifacts
 
