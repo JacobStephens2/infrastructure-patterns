@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://adr.stephens.page/sitemap.xml

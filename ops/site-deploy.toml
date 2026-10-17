@@ -1,0 +1,12 @@
+# Append this entry to the fleet source registry and install the registry.
+[sites.infrastructure-patterns]
+path = "/var/www/adr.stephens.page/checkout"
+branch = "main"
+github = "JacobStephens2/infrastructure-patterns"
+after = [
+  "npm ci --no-audit --no-fund",
+  "npm run check && npm run build",
+  "bash scripts/publish.sh /var/www/adr.stephens.page",
+]
+after_timeout = 300
+healthcheck = "https://adr.stephens.page/"

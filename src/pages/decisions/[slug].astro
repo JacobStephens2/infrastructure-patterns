@@ -1,0 +1,17 @@
+---
+import Document from '../../layouts/Document.astro';
+import { decisions } from '../../lib/content';
+export function getStaticPaths() {
+  return decisions.map((decision) => ({
+    params: { slug: decision.slug },
+    props: { decision },
+  }));
+}
+const { decision } = Astro.props;
+---
+
+<Document
+  {...decision}
+  description={decision.summary}
+  eyebrow={`ADR ${decision.id} / ${decision.topic} / ${decision.minutes} min read`}
+/>

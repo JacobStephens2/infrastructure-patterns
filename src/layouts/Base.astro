@@ -1,0 +1,70 @@
+---
+import '../styles/global.css';
+import { repository } from '../lib/content';
+interface Props {
+  title?: string;
+  description?: string;
+}
+const {
+  title = 'Infrastructure patterns',
+  description = 'Architecture decisions from systems I run in production. What I chose, what I gave up, and when I would choose differently. By Jacob Stephens.',
+} = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} | Jacob Stephens</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#f6f5ef" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">
+      Skip to content
+    </a>
+    <header class="site-header wrap">
+      <a class="brand" href="/" aria-label="Infrastructure patterns home">
+        <span class="brand-symbol" aria-hidden="true">
+          ↳
+        </span>
+        <span>
+          Infrastructure
+          <br />
+          <strong>patterns</strong>
+        </span>
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="/#library">Decisions</a>
+        <a href="/case-study/">Case study</a>
+        <a href="/about/">About</a>
+        <a class="source-nav" href={repository}>
+          GitHub <span aria-hidden="true">↗</span>
+        </a>
+      </nav>
+    </header>
+    <main id="main">
+      <slot />
+    </main>
+    <footer class="site-footer wrap">
+      <div>
+        <a href="https://stephens.page/">
+          Jacob Stephens <span aria-hidden="true">↗</span>
+        </a>
+        <p>Decisions from production. Reasoning in public.</p>
+      </div>
+      <div class="footer-links">
+        <a href="/about/#evidence-boundary">Evidence & sources</a>
+        <a href={repository}>Source on GitHub ↗</a>
+      </div>
+    </footer>
+  </body>
+</html>

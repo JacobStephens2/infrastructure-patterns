@@ -1,0 +1,221 @@
+---
+import Base from '../layouts/Base.astro';
+import { decisions, featured, topicNames, companions } from '../lib/content';
+---
+
+<Base>
+  <section class="hero wrap">
+    <div class="hero-copy">
+      <p class="eyebrow">Architecture decision records · Jacob Stephens</p>
+      <h1>
+        The reasoning
+        <br />
+        behind systems
+        <br />
+        <em>that run.</em>
+      </h1>
+      <p class="hero-description">
+        What I chose, what I gave up, and when I would choose differently.{' '}
+        {decisions.length} decisions from production software and the
+        infrastructure around it.
+      </p>
+      <div class="hero-actions">
+        <a class="button" href="#library">
+          Explore the decisions <span aria-hidden="true">↓</span>
+        </a>
+        <a class="text-link" href="/case-study/">
+          See the platform behind them ↗
+        </a>
+      </div>
+    </div>
+    <a
+      class="field-note"
+      href={decisions.find((decision) => decision.id === '0042')!.path}
+    >
+      <div class="note-top">
+        <span class="eyebrow">From the field</span>
+        <span class="mono">ADR 0042 ↗</span>
+      </div>
+      <div class="measurement">
+        <span>
+          1,441<span class="unit">s</span>
+        </span>
+        <span class="measurement-arrow" aria-hidden="true">
+          ↓
+        </span>
+        <span>
+          0.196<span class="unit">s</span>
+        </span>
+      </div>
+      <h2>
+        The results were right.
+        <br />
+        The query shape was wrong.
+      </h2>
+      <p>
+        A production dashboard aggregate, before and after a rule I had to
+        revise. The fix became a lint check.
+      </p>
+      <span class="note-bottom">
+        Read the decision <span aria-hidden="true">↗</span>
+      </span>
+    </a>
+  </section>
+  <div class="context-strip wrap">
+    <span class="eyebrow">Grounded in real work</span>
+    <p>
+      A reservations platform. Agent sandboxes. A self-hosted fleet. Public
+      tools and private systems.
+    </p>
+    <a href="/about/">Where these come from ↗</a>
+  </div>
+  <section class="section wrap" aria-labelledby="start-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">A few ways in</p>
+        <h2 id="start-heading">Start with the trade-off.</h2>
+      </div>
+      <p>
+        Eight records that show the range.
+        <br />
+        Each one names the cost of the choice.
+      </p>
+    </div>
+    <div class="featured-grid">
+      {featured.map((decision) => (
+        <a class="featured-record" href={decision.path}>
+          <p class="record-meta">
+            <span class="mono">{decision.id}</span>
+            <span>{decision.minutes} min read</span>
+          </p>
+          <h3>{decision.title}</h3>
+          <p>{decision.summary}</p>
+          <span class="record-arrow" aria-hidden="true">
+            ↗
+          </span>
+        </a>
+      ))}
+    </div>
+  </section>
+  <section
+    class="section library-section wrap"
+    id="library"
+    aria-labelledby="library-heading"
+  >
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">The collection</p>
+        <h2 id="library-heading">
+          All decisions<span class="heading-count">{decisions.length}</span>
+        </h2>
+      </div>
+      <p>
+        Browse by problem, or search the full records.
+        <br />
+        Numbers stay fixed; gaps include withdrawn records.
+      </p>
+    </div>
+    <form class="search-form" role="search">
+      <label for="search">Search decisions</label>
+      <div class="search-input">
+        <span aria-hidden="true">⌕</span>
+        <input
+          id="search"
+          type="search"
+          placeholder="Try “session lock”, “secrets”, or “deploy”…"
+          autocomplete="off"
+        />
+        <button type="reset">Clear</button>
+      </div>
+    </form>
+    <div
+      class="topic-filters"
+      role="group"
+      aria-label="Filter decisions by topic"
+    >
+      <button type="button" data-topic="" aria-pressed="true">
+        All topics
+      </button>
+      {topicNames.map((topic) => (
+        <button type="button" data-topic={topic} aria-pressed="false">
+          {topic}
+        </button>
+      ))}
+    </div>
+    <p id="result-count" class="result-count" role="status" aria-live="polite">
+      {decisions.length} decisions
+    </p>
+    <div class="decision-list">
+      {decisions.map((decision) => (
+        <a
+          class="decision-row"
+          href={decision.path}
+          data-record
+          data-topic={decision.topic}
+          data-search={decision.search}
+        >
+          <span class="decision-number mono">{decision.id}</span>
+          <div>
+            <p class="decision-topic">{decision.topic}</p>
+            <h3>{decision.title}</h3>
+            <p class="decision-summary">{decision.summary}</p>
+          </div>
+          <span class="row-arrow" aria-hidden="true">
+            ↗
+          </span>
+        </a>
+      ))}
+    </div>
+    <div id="empty-state" class="empty-state" hidden>
+      <h3>No decisions match.</h3>
+      <p>Try a different phrase or choose another topic.</p>
+      <button type="button" id="reset-filters">
+        Reset search and filters
+      </button>
+    </div>
+    <noscript>
+      <p>
+        All decisions are listed above. Enable JavaScript to search or filter.
+      </p>
+    </noscript>
+  </section>
+  <section class="companions-section">
+    <div class="section wrap">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Beyond the decision</p>
+          <h2>How it fits together.</h2>
+        </div>
+        <p>
+          The system, the risks, and the operating tools
+          <br />
+          behind the individual records.
+        </p>
+      </div>
+      <div class="companions-grid">
+        {companions.map((item, index) => (
+          <a href={item.path}>
+            <span class="mono">0{index + 1} /</span>
+            <h3>{item.label} ↗</h3>
+            <p>{item.description}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+  <section class="evidence-note wrap">
+    <p class="eyebrow">A note on evidence</p>
+    <h2>Every claim has a boundary.</h2>
+    <p>
+      These decisions are used in running applications or tools used for real
+      work. Private systems are sanitized. Public originals are linked. A
+      shipped fix and a measured production improvement are separate claims.
+    </p>
+    <a class="text-link" href="/about/#evidence-boundary">
+      Read the evidence boundary ↗
+    </a>
+  </section>
+</Base>
+<script>
+  import '../scripts/library';
+</script>

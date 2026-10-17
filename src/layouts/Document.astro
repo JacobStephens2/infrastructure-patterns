@@ -1,0 +1,48 @@
+---
+import Base from './Base.astro';
+import { repository } from '../lib/content';
+interface Props {
+  title: string;
+  description: string;
+  source: string;
+  html: string;
+  eyebrow: string;
+  headings: { id: string; text: string }[];
+}
+const { title, description, source, html, eyebrow, headings } = Astro.props;
+---
+
+<Base title={title} description={description}>
+  <div class="document wrap">
+    <aside class="document-aside">
+      <a class="back-link" href="/#library">
+        ← All decisions
+      </a>
+      {headings.length > 0 && (
+        <nav aria-label="On this page">
+          <p class="eyebrow">On this page</p>
+          {headings.map((heading) => (
+            <a href={`#${heading.id}`}>{heading.text}</a>
+          ))}
+        </nav>
+      )}
+      <a class="source-link" href={`${repository}/blob/main/${source}`}>
+        Read the source ↗
+      </a>
+    </aside>
+    <article>
+      <header class="document-heading">
+        <p class="eyebrow">{eyebrow}</p>
+        <h1>{title}</h1>
+        <p class="byline">
+          By <a href="https://stephens.page/">Jacob Stephens</a>
+        </p>
+      </header>
+      <div class="prose" set:html={html} />
+      <div class="document-end">
+        <a href="/#library">← Explore all decisions</a>
+        <a href={`${repository}/commits/main/${source}`}>Revision history ↗</a>
+      </div>
+    </article>
+  </div>
+</Base>

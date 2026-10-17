@@ -1,0 +1,24 @@
+---
+import Document from '../layouts/Document.astro';
+import { companions, companionDocument, aboutDocument } from '../lib/content';
+export function getStaticPaths() {
+  return [
+    ...companions.map((item) => ({
+      params: { page: item.path.split('/')[1] },
+      props: { ...item, ...companionDocument(item.source) },
+    })),
+    {
+      params: { page: 'about' },
+      props: {
+        title: 'Where these decisions come from.',
+        source: 'README.md',
+        description:
+          'The production systems behind the records, and the evidence each claim rests on.',
+        ...aboutDocument(),
+      },
+    },
+  ];
+}
+---
+
+<Document {...Astro.props} eyebrow="The context" />

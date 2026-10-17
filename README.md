@@ -1,5 +1,7 @@
 # infrastructure-patterns
 
+**Read the collection at [adr.stephens.page](https://adr.stephens.page/).**
+
 The curated home for my best Architecture Decision Records, from every system
 I run in production - private and public - written so the *reasoning* is
 visible even where the code cannot be.
@@ -86,9 +88,9 @@ Eight records that show the range, if you only read a few.
 
 All 52 records, grouped by the problem they belong to. Numbers are
 chronological and never reused, so gaps include withdrawn records. Their
-history stays in git. A partial web mirror is at
-[stephens.page/decisions](https://stephens.page/decisions/); this repository is
-current, and the mirror needs regeneration after updates.
+history stays in git. The website at
+[adr.stephens.page](https://adr.stephens.page/) builds directly from these
+records and deploys automatically when changes reach `main`.
 
 ### Running AI agents against production systems
 
