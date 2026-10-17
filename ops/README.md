@@ -28,7 +28,9 @@ npm test
 
 The browser tests exercise the built site: every record, local links and
 anchors, full-text search combined with topics, reloadable filter URLs,
-JavaScript-free reading, and phone layout. Tests serve `dist/` with Python 3.
+JavaScript-free reading, phone layout, and search under the production content
+security policy. Tests serve `dist/` with Python 3. Asset inlining is disabled
+in `astro.config.mjs` so scripts work with Apache's same-origin policy.
 
 ## Deployment
 

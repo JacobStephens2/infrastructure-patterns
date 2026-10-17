@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { readdirSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 
 test('every published decision has a readable page linked from the library', async ({
   page,
@@ -148,4 +148,27 @@ test('the home and record pages fit a phone viewport', async ({ page }) => {
       await page.evaluate(() => document.documentElement.scrollWidth),
     ).toBeLessThanOrEqual(375);
   }
+});
+
+test('search runs under the production content security policy', async ({
+  page,
+}) => {
+  const config = readFileSync('ops/apache/adr.stephens.page-ssl.conf', 'utf8');
+  const policy = config.match(
+    /Header always set Content-Security-Policy "([^"]+)"/,
+  )![1];
+  await page.route('**/*', async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({
+      response,
+      headers: { ...response.headers(), 'content-security-policy': policy },
+    });
+  });
+  await page.goto('/');
+  await page
+    .getByRole('searchbox')
+    .fill('a phrase that no decision contains 987654');
+  await expect(
+    page.getByRole('heading', { name: 'No decisions match.' }),
+  ).toBeVisible();
 });
