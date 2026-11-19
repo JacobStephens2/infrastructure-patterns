@@ -130,13 +130,29 @@ h3 {
   align-items: center;
 }
 .site-header nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-block-size: 24px;
   font-size: 12px;
   text-decoration: none;
+}
+.site-header nav a[aria-current='page'] {
+  color: var(--green);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.25em;
 }
 .site-header nav a:hover,
 .footer-links a:hover {
   color: var(--green);
   text-decoration: underline;
+}
+.home-nav {
+  color: var(--green);
+  font-weight: 600;
+  border-inline-end: 1px solid var(--line);
+  padding-inline-end: 29px;
 }
 .source-nav {
   border-left: 1px solid var(--line);
@@ -651,14 +667,15 @@ h3 {
     font-size: 25px;
   }
   .site-header nav {
-    gap: 13px;
+    gap: 6px 13px;
     flex-wrap: wrap;
     justify-content: flex-end;
-    max-width: 195px;
+    max-width: 215px;
   }
   .site-header nav a {
     font-size: 11px;
   }
+  .home-nav,
   .source-nav {
     border: 0;
     padding: 0;
