@@ -136,6 +136,23 @@ test('the complete collection is readable without JavaScript', async ({
   await context.close();
 });
 
+test('every page includes a clear header link back to stephens.page', async ({
+  page,
+}) => {
+  for (const path of [
+    '/',
+    '/about/',
+    '/decisions/0061-release-the-session-lock-before-slow-work/',
+  ]) {
+    await page.goto(path);
+    const link = page.locator(
+      '.site-header nav a[href="https://stephens.page/"]',
+    );
+    await expect(link, path).toBeVisible();
+    await expect(link, path).toContainText('stephens.page');
+  }
+});
+
 test('the home and record pages fit a phone viewport', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   for (const path of [
